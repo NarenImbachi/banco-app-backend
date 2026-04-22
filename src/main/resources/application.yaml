@@ -1,3 +1,19 @@
 spring:
   application:
     name: banco-app
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/banco_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_HIBERNATE_DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: ${DB_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+  h2:
+    console:
+      enabled: false
+server:
+  port: ${PORT:8080}

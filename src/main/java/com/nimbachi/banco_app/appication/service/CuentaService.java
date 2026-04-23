@@ -11,6 +11,8 @@ import com.nimbachi.banco_app.appication.input.ICuentaQueryUseCase;
 import com.nimbachi.banco_app.appication.output.IClientePersistencePort;
 import com.nimbachi.banco_app.appication.output.ICuentaPersistencePort;
 import com.nimbachi.banco_app.domain.model.Cuenta;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.mapper.ICuentaRestMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
 
     private final IClientePersistencePort clientePersistencePort;
     private final ICuentaPersistencePort cuentaPersistencePort;
+    private final ICuentaRestMapper cuentaRestMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,9 +42,11 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
 
     @Override
     @Transactional(readOnly = true)
-    public List<Cuenta> listarTodas() {
+    public List<CuentaResponse> listarTodas() {
         log.debug("Listando todas las cuentas");
-        return cuentaPersistencePort.findAll();
+        return cuentaPersistencePort.findAll().stream()
+                .map(cuentaRestMapper::domainToResponse)
+                .toList();
     }
 
     @Override

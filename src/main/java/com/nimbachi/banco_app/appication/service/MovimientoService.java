@@ -14,6 +14,7 @@ import com.nimbachi.banco_app.appication.output.IMovimientoPersistencePort;
 import com.nimbachi.banco_app.domain.enums.TipoMovimiento;
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.domain.model.Movimiento;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,8 +50,6 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     @Override
     public List<Movimiento> obtenerMovimientosPorCliente(Long clienteId, LocalDate fechaInicio, LocalDate fechaFin) {
         log.debug("Obteniendo movimientos del cliente ID: {}", clienteId);
-        // Este método requeriría una query custom en la BD que obtenga todos los movimientos
-        // de todas las cuentas de un cliente. Por ahora, lanza excepción.
         throw new RuntimeException("Este método requiere implementación adicional en la BD");
     }
 
@@ -72,7 +71,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
         // REGLA: Validar saldo disponible para retiros
         if (movimiento.getTipo() == TipoMovimiento.RETIRO) {
 
-            BigDecimal saldoActual = cuenta.getSaldoInicial();
+            BigDecimal saldoActual = cuenta.getSaldoDisponible();
 
             if (saldoActual.compareTo(BigDecimal.ZERO) <= 0) {
                 log.warn("Intento de retiro con saldo no disponible. Cuenta ID: {}", movimiento.getCuentaId());
@@ -83,7 +82,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
             validarCupoDiarioRetiros(movimiento, cuenta);
         }
 
-        BigDecimal saldoActual = cuenta.getSaldoInicial();
+        BigDecimal saldoActual = cuenta.getSaldoDisponible();
         BigDecimal nuevoSaldo = saldoActual.add(movimiento.getValor());
         movimiento.setSaldo(nuevoSaldo);
 
@@ -93,7 +92,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
 
         Movimiento movimientoGuardado = movimientoPersistencePort.save(movimiento);
 
-        cuenta.setSaldoInicial(nuevoSaldo);
+        cuenta.setSaldoDisponible(nuevoSaldo);
         cuentaPersistencePort.save(cuenta);
 
         log.info("Movimiento registrado exitosamente. Nuevo saldo: ${}", nuevoSaldo);
@@ -103,25 +102,28 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     @Override
     public void eliminar(Long id) {
         log.warn("Intento de eliminar movimiento ID: {}", id);
-        //throw new RuntimeException("Los movimientos no se pueden eliminar. Se preservan para auditoría");
+        // throw new RuntimeException("Los movimientos no se pueden eliminar. Se
+        // preservan para auditoría");
         movimientoPersistencePort.delete(id);
     }
 
     /**
      * Valida que el signo del valor sea correcto según el tipo de movimiento
      * DEPOSITO debe ser POSITIVO, RETIRO debe ser NEGATIVO
+     * 
      * @param movimiento Movimiento a validar
-     * @throws RuntimeException si el valor no cumple con la regla de signo según el tipo de movimiento
+     * @throws RuntimeException si el valor no cumple con la regla de signo según el
+     *                          tipo de movimiento
      */
     private void validarSignoMovimiento(Movimiento movimiento) {
         if (movimiento.getTipo() == TipoMovimiento.DEPOSITO) {
-            if (movimiento.getValor().compareTo(BigDecimal.ZERO) <= 0) 
+            if (movimiento.getValor().compareTo(BigDecimal.ZERO) <= 0)
                 throw new RuntimeException("El depósito debe ser un valor positivo");
-            
+
         } else if (movimiento.getTipo() == TipoMovimiento.RETIRO) {
-            if (movimiento.getValor().compareTo(BigDecimal.ZERO) >= 0) 
+            if (movimiento.getValor().compareTo(BigDecimal.ZERO) >= 0)
                 throw new RuntimeException("El retiro debe ser un valor negativo");
-            
+
         }
     }
 
@@ -159,4 +161,10 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
         return movimientoPersistencePort.findAll();
     }
 
+    @Override
+    public List<MovimientoListadoResponse> listarMovimientosFormateados() {
+        log.debug("Obteniendo listado de movimientos formateados");
+        return movimientoPersistencePort.obtenerListadoMovimientos();
+
+    }
 }

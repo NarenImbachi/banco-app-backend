@@ -10,6 +10,8 @@ import com.nimbachi.banco_app.appication.input.IClienteCommandUseCase;
 import com.nimbachi.banco_app.appication.input.IClienteQueryUseCase;
 import com.nimbachi.banco_app.appication.output.IClientePersistencePort;
 import com.nimbachi.banco_app.domain.model.Cliente;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IClienteRestMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseCase {
 
     private final IClientePersistencePort clientePersistencePort;
+    private final IClienteRestMapper clienteRestMapper;
 
     @Override
     @Transactional
@@ -90,12 +93,10 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Cliente> listarTodos() {
-        log.info("Listando todos los clientes");
-        return clientePersistencePort.findAll();
-    }
-
-    
-    
+@Transactional(readOnly = true)
+public List<ClienteResponse> listarTodos() {
+    log.info("Listando todos los clientes");
+    List<Cliente> clientes = clientePersistencePort.findAll();
+    return clienteRestMapper.domainListToResponseList(clientes);
+}
 }

@@ -2,6 +2,7 @@ package com.nimbachi.banco_app.infraestructure.output.jpa.adapter;
 
 import com.nimbachi.banco_app.appication.output.IMovimientoPersistencePort;
 import com.nimbachi.banco_app.domain.model.Movimiento;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
 import com.nimbachi.banco_app.infraestructure.output.jpa.entity.MovimientoEntity;
 import com.nimbachi.banco_app.infraestructure.output.jpa.mapper.IMovimientoEntityMapper;
 import com.nimbachi.banco_app.infraestructure.output.jpa.repository.MovimientoRepository;
@@ -73,5 +74,12 @@ public class MovimientoPersistenceAdapter implements IMovimientoPersistencePort 
     public void delete(Long movimientoId) {
         log.debug("Eliminando movimiento con ID: {}", movimientoId);
         movimientoRepository.deleteById(movimientoId);
+    }
+
+    @Override
+    public List<MovimientoListadoResponse> obtenerListadoMovimientos() {
+        log.debug("Obteniendo listado de movimientos para respuesta");
+        return movimientoRepository.obtenerListadoMovimientos();
+
     }
 }

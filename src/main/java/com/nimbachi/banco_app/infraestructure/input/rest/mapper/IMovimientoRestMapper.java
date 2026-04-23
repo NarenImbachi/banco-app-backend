@@ -16,6 +16,7 @@ public interface IMovimientoRestMapper {
     @Mapping(target = "saldo", ignore = true)
     Movimiento requestToDomain(CreateMovimientoRequest request);
 
+    @Mapping(target = "cuentaNumero", ignore = true)
     MovimientoResponse domainToResponse(Movimiento domain);
 
     List<MovimientoResponse> domainListToResponseList(List<Movimiento> domainList);

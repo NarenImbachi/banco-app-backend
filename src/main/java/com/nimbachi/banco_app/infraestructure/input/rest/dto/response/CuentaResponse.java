@@ -1,7 +1,6 @@
 package com.nimbachi.banco_app.infraestructure.input.rest.dto.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import com.nimbachi.banco_app.domain.enums.TipoCuenta;
@@ -20,8 +19,9 @@ public class CuentaResponse {
     private String numeroCuenta;
     private TipoCuenta tipo;
     private BigDecimal saldoInicial;
+    private BigDecimal saldoDisponible;
     private boolean estado;
-    private LocalDate fechaApertura;
+    private String estadoTexto;
     private Long clienteId;
     private List<MovimientoResponse> movimientos;
 }

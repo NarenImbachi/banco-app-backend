@@ -9,6 +9,8 @@ import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateCuentaRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateCuentaRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.mapper.ICuentaRestMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,17 +27,20 @@ public class CuentaController {
 
     private final ICuentaCommandUseCase cuentaCommandUseCase;
     private final ICuentaQueryUseCase cuentaQueryUseCase;
+    private final ICuentaRestMapper cuentaRestMapper;
 
     @PostMapping
     public ResponseEntity<ApiResponse<Cuenta>> crearCuenta(@Valid @RequestBody CreateCuentaRequest request) {
         log.info("POST /api/cuentas - Creando nueva cuenta: {}", request.getNumeroCuenta());
         
         Cuenta cuenta = new Cuenta();
-        cuenta.setNumeroCuenta(request.getNumeroCuenta());
+        cuenta = cuentaRestMapper.requestToDomain(request);
+        /*cuenta.setNumeroCuenta(request.getNumeroCuenta());
         cuenta.setTipo(request.getTipo());
         cuenta.setSaldoInicial(request.getSaldoInicial());
+        cuenta.setSaldoDisponible(request.getSaldoInicial());
         cuenta.setEstado(request.isEstado());
-        cuenta.setClienteId(request.getClienteId());
+        cuenta.setClienteId(request.getClienteId());*/
 
         Cuenta cuentaCreada = cuentaCommandUseCase.crearCuenta(cuenta);
         return new ResponseEntity<>(ApiResponse.success(cuentaCreada, "Cuenta creada exitosamente"), HttpStatus.CREATED);
@@ -57,9 +62,9 @@ public class CuentaController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Cuenta>>> listarTodas() {
+    public ResponseEntity<ApiResponse<List<CuentaResponse>>> listarTodas() {
         log.info("GET /api/cuentas - Listando todas las cuentas");
-        List<Cuenta> cuentas = cuentaQueryUseCase.listarTodas();
+        List<CuentaResponse> cuentas = cuentaQueryUseCase.listarTodas();
         return new ResponseEntity<>(ApiResponse.success(cuentas, "Cuentas obtenidas exitosamente"), HttpStatus.OK);
     }
 

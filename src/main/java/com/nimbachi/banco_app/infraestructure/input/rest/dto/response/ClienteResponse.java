@@ -20,5 +20,6 @@ public class ClienteResponse {
     private String telefono;
     private String clienteId;
     private boolean estado;
+    private String estadoTexto;
     private List<CuentaResponse> cuentas;
 }

@@ -9,6 +9,8 @@ import com.nimbachi.banco_app.domain.model.Cliente;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateClienteRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateClienteRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IClienteRestMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,21 +27,14 @@ public class ClienteController {
 
     private final IClienteCommandUseCase clienteCommandUseCase;
     private final IClienteQueryUseCase clienteQueryUseCase;
+    private final IClienteRestMapper clienteRestMapper;
 
     @PostMapping
     public ResponseEntity<ApiResponse<Cliente>> crearCliente(@Valid @RequestBody CreateClienteRequest request) {
         log.info("POST /api/clientes - Creando nuevo cliente: {}", request.getClienteId());
         
         Cliente cliente = new Cliente();
-        cliente.setNombre(request.getNombre());
-        cliente.setGenero(request.getGenero());
-        cliente.setEdad(request.getEdad());
-        cliente.setIdentificacion(request.getIdentificacion());
-        cliente.setDireccion(request.getDireccion());
-        cliente.setTelefono(request.getTelefono());
-        cliente.setClienteId(request.getClienteId());
-        cliente.setContrasena(request.getContrasena());
-        cliente.setEstado(request.isEstado());
+        cliente = clienteRestMapper.requestToDomain(request);
 
         Cliente clienteCreado = clienteCommandUseCase.crearCliente(cliente);
         return new ResponseEntity<>(ApiResponse.success(clienteCreado, "Cliente creado exitosamente"), HttpStatus.CREATED);
@@ -61,17 +56,10 @@ public class ClienteController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Cliente>>> listarTodos() {
+    public ResponseEntity<ApiResponse<List<ClienteResponse>>> listarTodos() {
         log.info("GET /api/clientes - Listando todos los clientes");
-        List<Cliente> clientes = clienteQueryUseCase.listarTodos();
+        List<ClienteResponse> clientes = clienteQueryUseCase.listarTodos();
         return new ResponseEntity<>(ApiResponse.success(clientes, "Clientes obtenidos exitosamente"), HttpStatus.OK);
-    }
-
-    @GetMapping("/activos")
-    public ResponseEntity<ApiResponse<List<Cliente>>> listarActivos() {
-        log.info("GET /api/clientes/activos - Listando clientes activos");
-        List<Cliente> clientes = clienteQueryUseCase.listarActivos();
-        return new ResponseEntity<>(ApiResponse.success(clientes, "Clientes activos obtenidos exitosamente"), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")

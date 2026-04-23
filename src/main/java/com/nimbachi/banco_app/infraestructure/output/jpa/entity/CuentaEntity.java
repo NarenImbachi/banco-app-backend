@@ -48,6 +48,9 @@ public class CuentaEntity {
     private BigDecimal saldoInicial;
 
     @Column(nullable = false)
+    private BigDecimal saldoDisponible;
+
+    @Column(nullable = false)
     private Boolean estado;
 
     @ManyToOne(fetch = FetchType.LAZY)

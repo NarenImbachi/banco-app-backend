@@ -14,9 +14,11 @@ public interface ICuentaRestMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "movimientos", ignore = true)
+    @Mapping(target = "saldoDisponible", source = "saldoInicial")
     Cuenta requestToDomain(CreateCuentaRequest request);
 
-    @Mapping(target = "fechaApertura", ignore = true)
+    @Mapping(target = "estadoTexto", expression = "java(domain.isEstado() ? \"Activo\" : \"Inactivo\")")
+    @Mapping(target = "movimientos", ignore = true)
     CuentaResponse domainToResponse(Cuenta domain);
 
     List<CuentaResponse> domainListToResponseList(List<Cuenta> domainList);

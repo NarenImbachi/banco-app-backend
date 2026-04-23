@@ -3,8 +3,9 @@ package com.nimbachi.banco_app.infraestructure.input.rest.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.nimbachi.banco_app.appication.input.IMovimientoCommandUseCase;
-import com.nimbachi.banco_app.appication.input.IMovimientoQueryUseCase;
+
+import com.nimbachi.banco_app.application.input.IMovimientoCommandUseCase;
+import com.nimbachi.banco_app.application.input.IMovimientoQueryUseCase;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateMovimientoRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;

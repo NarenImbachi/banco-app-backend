@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.appication.service;
+package com.nimbachi.banco_app.application.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,10 +9,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nimbachi.banco_app.appication.input.IReporteQueryUseCase;
-import com.nimbachi.banco_app.appication.output.IClientePersistencePort;
-import com.nimbachi.banco_app.appication.output.ICuentaPersistencePort;
-import com.nimbachi.banco_app.appication.output.IMovimientoPersistencePort;
+import com.nimbachi.banco_app.application.input.IReporteQueryUseCase;
+import com.nimbachi.banco_app.application.output.IClientePersistencePort;
+import com.nimbachi.banco_app.application.output.ICuentaPersistencePort;
+import com.nimbachi.banco_app.application.output.IMovimientoPersistencePort;
 import com.nimbachi.banco_app.domain.model.Cliente;
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.domain.model.Movimiento;

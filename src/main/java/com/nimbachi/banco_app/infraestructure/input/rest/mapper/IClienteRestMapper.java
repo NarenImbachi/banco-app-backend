@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 
 import com.nimbachi.banco_app.domain.model.Cliente;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateClienteRequest;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateClienteRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
 
 @Mapper(componentModel = "spring")
@@ -24,4 +25,6 @@ public interface IClienteRestMapper {
     ClienteResponse domainToResponse(Cliente domain);
 
     List<ClienteResponse> domainListToResponseList(List<Cliente> domainList);
+
+    Object updateRequestToDomain(UpdateClienteRequest any);
 }

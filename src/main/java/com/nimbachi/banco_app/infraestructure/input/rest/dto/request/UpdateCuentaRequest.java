@@ -4,12 +4,14 @@ import com.nimbachi.banco_app.domain.enums.TipoCuenta;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UpdateCuentaRequest {
     
     private TipoCuenta tipo;

@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.appication.input;
+package com.nimbachi.banco_app.application.input;
 
 import java.util.List;
 import java.util.Optional;

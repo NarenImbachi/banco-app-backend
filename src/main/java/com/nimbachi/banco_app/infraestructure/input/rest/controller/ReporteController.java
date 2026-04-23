@@ -3,7 +3,8 @@ package com.nimbachi.banco_app.infraestructure.input.rest.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.nimbachi.banco_app.appication.input.IReporteQueryUseCase;
+
+import com.nimbachi.banco_app.application.input.IReporteQueryUseCase;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ReporteMovimientoResponse;
 

@@ -1,6 +1,6 @@
 package com.nimbachi.banco_app.infraestructure.output.jpa.adapter;
 
-import com.nimbachi.banco_app.appication.output.ICuentaPersistencePort;
+import com.nimbachi.banco_app.application.output.ICuentaPersistencePort;
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.infraestructure.output.jpa.entity.CuentaEntity;
 import com.nimbachi.banco_app.infraestructure.output.jpa.mapper.ICuentaEntityMapper;

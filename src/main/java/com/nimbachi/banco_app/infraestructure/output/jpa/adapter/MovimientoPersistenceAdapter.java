@@ -1,6 +1,6 @@
 package com.nimbachi.banco_app.infraestructure.output.jpa.adapter;
 
-import com.nimbachi.banco_app.appication.output.IMovimientoPersistencePort;
+import com.nimbachi.banco_app.application.output.IMovimientoPersistencePort;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
 import com.nimbachi.banco_app.infraestructure.output.jpa.entity.MovimientoEntity;

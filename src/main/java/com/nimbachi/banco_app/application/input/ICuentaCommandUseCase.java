@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.appication.input;
+package com.nimbachi.banco_app.application.input;
 
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;

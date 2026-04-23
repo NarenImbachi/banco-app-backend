@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.appication.input;
+package com.nimbachi.banco_app.application.input;
 
 import java.time.LocalDate;
 import java.util.List;

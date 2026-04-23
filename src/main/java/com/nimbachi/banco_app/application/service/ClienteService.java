@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.appication.service;
+package com.nimbachi.banco_app.application.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,9 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nimbachi.banco_app.appication.input.IClienteCommandUseCase;
-import com.nimbachi.banco_app.appication.input.IClienteQueryUseCase;
-import com.nimbachi.banco_app.appication.output.IClientePersistencePort;
+import com.nimbachi.banco_app.application.input.IClienteCommandUseCase;
+import com.nimbachi.banco_app.application.input.IClienteQueryUseCase;
+import com.nimbachi.banco_app.application.output.IClientePersistencePort;
 import com.nimbachi.banco_app.domain.model.Cliente;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IClienteRestMapper;

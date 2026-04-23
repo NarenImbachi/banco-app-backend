@@ -15,6 +15,8 @@ import com.nimbachi.banco_app.domain.enums.TipoMovimiento;
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IMovimientoRestMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
 
     private final ICuentaPersistencePort cuentaPersistencePort;
     private final IMovimientoPersistencePort movimientoPersistencePort;
+    private final IMovimientoRestMapper movimientoRestMapper;
     private static final BigDecimal LIMITE_RETIRO_DIARIO = new BigDecimal("1000");
 
     @Override
@@ -36,26 +39,8 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     }
 
     @Override
-    public List<Movimiento> obtenerPorCuenta(Long cuentaId) {
-        log.debug("Obteniendo movimientos de cuenta ID: {}", cuentaId);
-        return movimientoPersistencePort.findByCuentaId(cuentaId);
-    }
-
-    @Override
-    public List<Movimiento> obtenerPorRangoFechas(Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin) {
-        log.debug("Obteniendo movimientos de cuenta ID: {} entre {} y {}", cuentaId, fechaInicio, fechaFin);
-        return movimientoPersistencePort.findByCuentaIdAndFechaBetween(cuentaId, fechaInicio, fechaFin);
-    }
-
-    @Override
-    public List<Movimiento> obtenerMovimientosPorCliente(Long clienteId, LocalDate fechaInicio, LocalDate fechaFin) {
-        log.debug("Obteniendo movimientos del cliente ID: {}", clienteId);
-        throw new RuntimeException("Este método requiere implementación adicional en la BD");
-    }
-
-    @Override
     @Transactional
-    public Movimiento registrarMovimiento(Long cuentaId, Movimiento movimiento) {
+    public MovimientoResponse registrarMovimiento(Long cuentaId, Movimiento movimiento) {
         log.info("Registrando movimiento: {} de ${} en cuenta ID: {}",
                 movimiento.getTipo(), movimiento.getValor(), movimiento.getCuentaId());
 
@@ -96,7 +81,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
         cuentaPersistencePort.save(cuenta);
 
         log.info("Movimiento registrado exitosamente. Nuevo saldo: ${}", nuevoSaldo);
-        return movimientoGuardado;
+        return movimientoRestMapper.domainToResponse(movimientoGuardado);
     }
 
     @Override
@@ -153,12 +138,6 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
                     totalRetirosDia, nuevoRetiroPositivo);
             throw new RuntimeException("Cupo diario Excedido");
         }
-    }
-
-    @Override
-    public List<Movimiento> obtenerTodos() {
-        log.debug("Obteniendo todos los movimientos");
-        return movimientoPersistencePort.findAll();
     }
 
     @Override

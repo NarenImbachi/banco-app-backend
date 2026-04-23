@@ -30,7 +30,7 @@ public class CuentaController {
     private final ICuentaRestMapper cuentaRestMapper;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Cuenta>> crearCuenta(@Valid @RequestBody CreateCuentaRequest request) {
+    public ResponseEntity<ApiResponse<CuentaResponse>> crearCuenta(@Valid @RequestBody CreateCuentaRequest request) {
         log.info("POST /api/cuentas - Creando nueva cuenta: {}", request.getNumeroCuenta());
         
         Cuenta cuenta = new Cuenta();
@@ -42,7 +42,7 @@ public class CuentaController {
         cuenta.setEstado(request.isEstado());
         cuenta.setClienteId(request.getClienteId());*/
 
-        Cuenta cuentaCreada = cuentaCommandUseCase.crearCuenta(cuenta);
+        CuentaResponse cuentaCreada = cuentaCommandUseCase.crearCuenta(cuenta);
         return new ResponseEntity<>(ApiResponse.success(cuentaCreada, "Cuenta creada exitosamente"), HttpStatus.CREATED);
     }
 
@@ -68,15 +68,8 @@ public class CuentaController {
         return new ResponseEntity<>(ApiResponse.success(cuentas, "Cuentas obtenidas exitosamente"), HttpStatus.OK);
     }
 
-    @GetMapping("/cliente/{clienteId}")
-    public ResponseEntity<ApiResponse<List<Cuenta>>> obtenerPorCliente(@PathVariable Long clienteId) {
-        log.info("GET /api/cuentas/cliente/{} - Obteniendo cuentas del cliente", clienteId);
-        List<Cuenta> cuentas = cuentaQueryUseCase.obtenerPorCliente(clienteId);
-        return new ResponseEntity<>(ApiResponse.success(cuentas, "Cuentas del cliente obtenidas exitosamente"), HttpStatus.OK);
-    }
-
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Cuenta>> actualizar(@PathVariable Long id, @Valid @RequestBody UpdateCuentaRequest request) {
+    public ResponseEntity<ApiResponse<CuentaResponse>> actualizar(@PathVariable Long id, @Valid @RequestBody UpdateCuentaRequest request) {
         Optional<Cuenta> cuentaOptional = cuentaQueryUseCase.obtenerPorId(id);
         
         if (cuentaOptional.isEmpty()) {
@@ -90,7 +83,7 @@ public class CuentaController {
         if (request.getTipo() != null) cuenta.setTipo(request.getTipo());
         cuenta.setEstado(request.isEstado());
 
-        Cuenta cuentaActualizada = cuentaCommandUseCase.actualizar(cuenta.getId(), cuenta);
+        CuentaResponse cuentaActualizada = cuentaCommandUseCase.actualizar(cuenta.getId(), cuenta);
         return new ResponseEntity<>(ApiResponse.success(cuentaActualizada, "Cuenta actualizada exitosamente"), HttpStatus.OK);
     }
 

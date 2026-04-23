@@ -9,7 +9,6 @@ public interface IClientePersistencePort {
     Cliente save(Cliente cliente);
     Optional<Cliente> findById(Long id);
     List<Cliente> findAll();
-    List<Cliente> findAllActive();
     Optional<Cliente> findByClienteId(String clienteId);
     void deleteById(Long id);
     boolean existsByClienteId(String clienteId);

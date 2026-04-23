@@ -8,6 +8,5 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResp
 
 public interface ICuentaQueryUseCase {
     Optional<Cuenta> obtenerPorId(Long id);
-    List<Cuenta> obtenerPorCliente(Long clienteId);
     List<CuentaResponse> listarTodas();
 }

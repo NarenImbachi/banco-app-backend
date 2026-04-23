@@ -26,7 +26,7 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
 
     @Override
     @Transactional
-    public Cliente crearCliente(Cliente cliente) {
+    public ClienteResponse crearCliente(Cliente cliente) {
         log.info("Creando nuevo cliente: {}", cliente.getClienteId());
 
         // Validar que clienteId sea único
@@ -39,24 +39,23 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
         Cliente clienteCreado = clientePersistencePort.save(cliente);
         log.info("Cliente creado exitosamente con ID: {}", clienteCreado.getId());
 
-        return clienteCreado;
+        return clienteRestMapper.domainToResponse(clienteCreado);
     }
 
     @Override
     @Transactional
-    public Cliente actualizar(Long id, Cliente clienteActualizado) {
+    public ClienteResponse actualizar(Long id, Cliente clienteActualizado) {
         log.info("Actualizando cliente con ID: {}", id);
 
         Cliente clienteExistente = clientePersistencePort.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente con ID " + id + " no encontrado"));
 
         // Validar que no cambien identificación
-        if (!clienteExistente.getIdentificacion().equals(clienteActualizado.getIdentificacion())) 
+        if (!clienteExistente.getIdentificacion().equals(clienteActualizado.getIdentificacion()))
             throw new RuntimeException("No se puede cambiar la identificación del cliente");
 
-        if (!clienteExistente.getClienteId().equals(clienteActualizado.getClienteId())) 
+        if (!clienteExistente.getClienteId().equals(clienteActualizado.getClienteId()))
             throw new RuntimeException("No se puede cambiar el clienteId");
-        
 
         clienteExistente.setNombre(clienteActualizado.getNombre());
         clienteExistente.setGenero(clienteActualizado.getGenero());
@@ -65,10 +64,10 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
         clienteExistente.setTelefono(clienteActualizado.getTelefono());
         clienteExistente.setEstado(clienteActualizado.getEstado());
 
-        Cliente clienteActualizado_ = clientePersistencePort.save(clienteExistente);
+        Cliente clienteGuardado = clientePersistencePort.save(clienteExistente);
         log.info("Cliente actualizado exitosamente");
 
-        return clienteActualizado_;
+        return clienteRestMapper.domainToResponse(clienteGuardado);
     }
 
     @Override
@@ -87,16 +86,9 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
 
     @Override
     @Transactional(readOnly = true)
-    public List<Cliente> listarActivos() {
-        log.info("Listando clientes activos");
-        return clientePersistencePort.findAllActive();
+    public List<ClienteResponse> listarTodos() {
+        log.info("Listando todos los clientes");
+        List<Cliente> clientes = clientePersistencePort.findAll();
+        return clienteRestMapper.domainListToResponseList(clientes);
     }
-
-    @Override
-@Transactional(readOnly = true)
-public List<ClienteResponse> listarTodos() {
-    log.info("Listando todos los clientes");
-    List<Cliente> clientes = clientePersistencePort.findAll();
-    return clienteRestMapper.domainListToResponseList(clientes);
-}
 }

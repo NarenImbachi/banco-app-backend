@@ -1,9 +1,10 @@
 package com.nimbachi.banco_app.appication.input;
 
 import com.nimbachi.banco_app.domain.model.Cliente;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
 
 public interface IClienteCommandUseCase {
-    Cliente crearCliente(Cliente cliente);
-    Cliente actualizar(Long id, Cliente cliente);
+    ClienteResponse crearCliente(Cliente cliente);
+    ClienteResponse actualizar(Long id, Cliente cliente);
     void eliminar(Long id);
 }

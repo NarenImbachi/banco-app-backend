@@ -9,6 +9,7 @@ import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateMovimientoRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IMovimientoRestMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class MovimientoController {
         private final IMovimientoRestMapper movimientoRestMapper;
 
         @PostMapping
-        public ResponseEntity<ApiResponse<Movimiento>> registrarMovimiento(
+        public ResponseEntity<ApiResponse<MovimientoResponse>> registrarMovimiento(
                         @Valid @RequestBody CreateMovimientoRequest request) {
                 log.info("POST /api/movimientos - Registrando movimiento en cuenta: {}", request.getCuentaId());
 
@@ -39,7 +40,7 @@ public class MovimientoController {
                 movimiento.setValor(request.getValor());
                 movimiento.setCuentaId(request.getCuentaId());*/
 
-                Movimiento movimientoRegistrado = movimientoCommandUseCase.registrarMovimiento(movimiento.getCuentaId(), movimiento);
+                MovimientoResponse movimientoRegistrado = movimientoCommandUseCase.registrarMovimiento(movimiento.getCuentaId(), movimiento);
                 return new ResponseEntity<>(
                                 ApiResponse.success(movimientoRegistrado, "Movimiento registrado exitosamente"),
                                 HttpStatus.CREATED);

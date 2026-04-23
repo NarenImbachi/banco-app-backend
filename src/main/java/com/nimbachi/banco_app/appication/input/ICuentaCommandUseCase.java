@@ -1,9 +1,10 @@
 package com.nimbachi.banco_app.appication.input;
 
 import com.nimbachi.banco_app.domain.model.Cuenta;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;
 
 public interface ICuentaCommandUseCase {
-    Cuenta crearCuenta(Cuenta cuenta);
-    Cuenta actualizar(Long id, Cuenta cuenta);
+    CuentaResponse crearCuenta(Cuenta cuenta);
+    CuentaResponse actualizar(Long id, Cuenta cuenta);
     void eliminar(Long id);
 }

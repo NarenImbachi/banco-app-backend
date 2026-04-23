@@ -39,22 +39,6 @@ public class MovimientoPersistenceAdapter implements IMovimientoPersistencePort 
     }
 
     @Override
-    public List<Movimiento> findAll() {
-        log.debug("Obteniendo todos los movimientos");
-        return movimientoRepository.findAll().stream()
-                .map(movimientoEntityMapper::entityToDomain)
-                .toList();
-    }
-
-    @Override
-    public List<Movimiento> findByCuentaId(Long cuentaId) {
-        log.debug("Obteniendo movimientos de la cuenta ID: {}", cuentaId);
-        return movimientoRepository.findByCuentaId(cuentaId).stream()
-                .map(movimientoEntityMapper::entityToDomain)
-                .toList();
-    }
-
-    @Override
     public List<Movimiento> findByCuentaIdAndFechaBetween(Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin) {
         log.debug("Obteniendo movimientos de cuenta ID: {} entre {} y {}", cuentaId, fechaInicio, fechaFin);
         return movimientoRepository.findByCuentaIdAndFechaBetween(cuentaId, fechaInicio, fechaFin).stream()

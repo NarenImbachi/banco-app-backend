@@ -30,13 +30,13 @@ public class ClienteController {
     private final IClienteRestMapper clienteRestMapper;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Cliente>> crearCliente(@Valid @RequestBody CreateClienteRequest request) {
+    public ResponseEntity<ApiResponse<ClienteResponse>> crearCliente(@Valid @RequestBody CreateClienteRequest request) {
         log.info("POST /api/clientes - Creando nuevo cliente: {}", request.getClienteId());
         
         Cliente cliente = new Cliente();
         cliente = clienteRestMapper.requestToDomain(request);
+        ClienteResponse clienteCreado = clienteCommandUseCase.crearCliente(cliente);
 
-        Cliente clienteCreado = clienteCommandUseCase.crearCliente(cliente);
         return new ResponseEntity<>(ApiResponse.success(clienteCreado, "Cliente creado exitosamente"), HttpStatus.CREATED);
     }
 
@@ -63,7 +63,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Cliente>> actualizar(@PathVariable Long id, @Valid @RequestBody UpdateClienteRequest request) {
+    public ResponseEntity<ApiResponse<ClienteResponse>> actualizar(@PathVariable Long id, @Valid @RequestBody UpdateClienteRequest request) {
         log.info("PUT /api/clientes/{} - Actualizando cliente", id);
         Optional<Cliente> clienteOptional = clienteQueryUseCase.obtenerPorId(id);
         
@@ -80,7 +80,7 @@ public class ClienteController {
         if (request.getTelefono() != null) cliente.setTelefono(request.getTelefono());
         cliente.setEstado(request.isEstado());
 
-        Cliente clienteActualizado = clienteCommandUseCase.actualizar(cliente.getId(), cliente);
+        ClienteResponse clienteActualizado = clienteCommandUseCase.actualizar(cliente.getId(), cliente);
         return new ResponseEntity<>(ApiResponse.success(clienteActualizado, "Cliente actualizado exitosamente"), HttpStatus.OK);
     }
 

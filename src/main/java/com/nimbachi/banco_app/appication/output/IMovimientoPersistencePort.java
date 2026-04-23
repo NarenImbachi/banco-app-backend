@@ -10,8 +10,6 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.Movimiento
 public interface IMovimientoPersistencePort {
     Movimiento save(Movimiento movimiento);
     Optional<Movimiento> findById(Long id);
-    List<Movimiento> findAll();
-    List<Movimiento> findByCuentaId(Long cuentaId);
     List<Movimiento> findByCuentaIdAndFechaBetween(Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin);
     List<Movimiento> findByCuentaIdAndFecha(Long cuentaId, LocalDate fecha);
     void delete(Long id);

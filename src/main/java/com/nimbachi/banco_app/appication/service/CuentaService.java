@@ -35,13 +35,6 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
 
     @Override
     @Transactional(readOnly = true)
-    public List<Cuenta> obtenerPorCliente(Long clienteId) {
-        log.debug("Obteniendo cuentas para el cliente con ID: {}", clienteId);
-        return cuentaPersistencePort.findByClienteId(clienteId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<CuentaResponse> listarTodas() {
         log.debug("Listando todas las cuentas");
         return cuentaPersistencePort.findAll().stream()
@@ -51,7 +44,7 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
 
     @Override
     @Transactional
-    public Cuenta crearCuenta(Cuenta cuenta) {
+    public CuentaResponse crearCuenta(Cuenta cuenta) {
         log.info("Creando nueva cuenta: {}", cuenta.getNumeroCuenta());
 
         // Validar que el cliente existe
@@ -70,12 +63,12 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
         log.info("Cuenta creada exitosamente. Número: {}, Cliente ID: {}",
                 cuentaCreada.getNumeroCuenta(), cuentaCreada.getClienteId());
 
-        return cuentaCreada;
+        return cuentaRestMapper.domainToResponse(cuentaCreada);
     }
 
     @Override
     @Transactional
-    public Cuenta actualizar(Long id, Cuenta cuenta) {
+    public CuentaResponse actualizar(Long id, Cuenta cuenta) {
         log.info("Actualizando cuenta: {}", cuenta.getId());
 
         Optional<Cuenta> cuentaExistente = cuentaPersistencePort.findById(cuenta.getId());
@@ -99,7 +92,7 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
         Cuenta cuentaActualizada = cuentaPersistencePort.save(cuentabd);
         log.info("Cuenta actualizada exitosamente. Número: {}, Estado: {}", cuentaActualizada.getNumeroCuenta(), cuentaActualizada.isEstado());
 
-        return cuentaActualizada;
+        return cuentaRestMapper.domainToResponse(cuentaActualizada);
     }
 
     @Override

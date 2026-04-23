@@ -8,6 +8,5 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteRes
 
 public interface IClienteQueryUseCase {
     Optional<Cliente> obtenerPorId(Long id);
-    List<Cliente> listarActivos();
     List<ClienteResponse> listarTodos();
 }

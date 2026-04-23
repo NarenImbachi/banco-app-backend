@@ -45,15 +45,6 @@ public class ClientePersistenceAdapter implements IClientePersistencePort {
     }
 
     @Override
-    public List<Cliente> findAllActive() {
-        log.debug("Obteniendo clientes activos");
-        return clienteRepository.findAll().stream()
-                .filter(entity -> entity.getEstado() == true)
-                .map(clienteEntityMapper::toDomain)
-                .toList();
-    }
-
-    @Override
     public Optional<Cliente> findByClienteId(String clienteId) {
         log.debug("Buscando cliente por clienteId: {}", clienteId);
         return clienteRepository.findByClienteId(clienteId)

@@ -1,4 +1,4 @@
-package com.nimbachi.banco_app.infraestructure.input.rest.controller;
+package com.nimbachi.banco_app.infraestructure.input.rest.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

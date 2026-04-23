@@ -103,7 +103,8 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     @Override
     public void eliminar(Long id) {
         log.warn("Intento de eliminar movimiento ID: {}", id);
-        throw new RuntimeException("Los movimientos no se pueden eliminar. Se preservan para auditoría");
+        //throw new RuntimeException("Los movimientos no se pueden eliminar. Se preservan para auditoría");
+        movimientoPersistencePort.delete(id);
     }
 
     /**
@@ -150,6 +151,12 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
                     totalRetirosDia, nuevoRetiroPositivo);
             throw new RuntimeException("Cupo diario Excedido");
         }
+    }
+
+    @Override
+    public List<Movimiento> obtenerTodos() {
+        log.debug("Obteniendo todos los movimientos");
+        return movimientoPersistencePort.findAll();
     }
 
 }

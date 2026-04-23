@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class Cliente extends Persona {
     private String clienteId;
-    private String contraseña;
+    private String contrasena;
     private Boolean estado;
     private List<Cuenta> cuentas;
 }

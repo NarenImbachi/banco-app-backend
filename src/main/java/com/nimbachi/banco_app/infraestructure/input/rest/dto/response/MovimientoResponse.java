@@ -21,4 +21,5 @@ public class MovimientoResponse {
     private BigDecimal valor;
     private BigDecimal saldo;
     private Long cuentaId;
+    private Long cuentaNumero;
 }

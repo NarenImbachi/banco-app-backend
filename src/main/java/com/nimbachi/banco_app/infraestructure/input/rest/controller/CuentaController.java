@@ -83,7 +83,7 @@ public class CuentaController {
 
         Cuenta cuenta = cuentaOptional.get();
         if (request.getTipo() != null) cuenta.setTipo(request.getTipo());
-        if (request.isEstado()) cuenta.setEstado(request.isEstado());
+        cuenta.setEstado(request.isEstado());
 
         Cuenta cuentaActualizada = cuentaCommandUseCase.actualizar(cuenta.getId(), cuenta);
         return new ResponseEntity<>(ApiResponse.success(cuentaActualizada, "Cuenta actualizada exitosamente"), HttpStatus.OK);

@@ -46,7 +46,7 @@ public class CreateClienteRequest {
 
     @NotBlank(message = "La contraseña es requerida")
     @Size(min = 4, max = 20, message = "La contraseña debe tener entre 4 y 20 caracteres")
-    private String contraseña;
+    private String contrasena;
 
     @NotNull(message = "El estado es requerido")
     private boolean estado; // true para activo, false para inactivo

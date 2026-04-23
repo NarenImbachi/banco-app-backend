@@ -92,7 +92,7 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
         cuentabd.setEstado(cuenta.isEstado());
 
         Cuenta cuentaActualizada = cuentaPersistencePort.save(cuentabd);
-        log.info("Cuenta actualizada exitosamente. Número: {}", cuentaActualizada.getNumeroCuenta());
+        log.info("Cuenta actualizada exitosamente. Número: {}, Estado: {}", cuentaActualizada.getNumeroCuenta(), cuentaActualizada.isEstado());
 
         return cuentaActualizada;
     }

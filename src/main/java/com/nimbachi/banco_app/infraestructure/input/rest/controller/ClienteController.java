@@ -7,6 +7,7 @@ import com.nimbachi.banco_app.appication.input.IClienteCommandUseCase;
 import com.nimbachi.banco_app.appication.input.IClienteQueryUseCase;
 import com.nimbachi.banco_app.domain.model.Cliente;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateClienteRequest;
+import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateClienteRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class ClienteController {
         cliente.setDireccion(request.getDireccion());
         cliente.setTelefono(request.getTelefono());
         cliente.setClienteId(request.getClienteId());
-        cliente.setContraseña(request.getContraseña());
+        cliente.setContrasena(request.getContrasena());
         cliente.setEstado(request.isEstado());
 
         Cliente clienteCreado = clienteCommandUseCase.crearCliente(cliente);

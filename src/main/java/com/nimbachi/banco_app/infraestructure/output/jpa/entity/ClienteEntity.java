@@ -25,7 +25,7 @@ public class ClienteEntity extends PersonaEntity {
     private String clienteId;
 
     @Column(nullable = false)
-    private String contraseña;
+    private String contrasena;
 
     @Column(nullable = false)
     private Boolean estado;

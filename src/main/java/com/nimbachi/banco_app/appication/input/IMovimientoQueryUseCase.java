@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 
 public interface IMovimientoQueryUseCase {
+    List<Movimiento> obtenerTodos();
     Optional<Movimiento> obtenerPorId(Long id);
     List<Movimiento> obtenerPorCuenta(Long cuentaId);
     List<Movimiento> obtenerPorRangoFechas(Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin);

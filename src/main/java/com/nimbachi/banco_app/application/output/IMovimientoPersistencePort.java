@@ -14,4 +14,5 @@ public interface IMovimientoPersistencePort {
     List<Movimiento> findByCuentaIdAndFecha(Long cuentaId, LocalDate fecha);
     void delete(Long id);
     List<MovimientoListadoResponse> obtenerListadoMovimientos();
+    List<Movimiento> findRetirosByCuentaIdAndFecha(Long cuentaId, LocalDate now);
 }

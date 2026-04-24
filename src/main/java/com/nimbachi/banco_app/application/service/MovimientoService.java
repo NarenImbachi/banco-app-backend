@@ -1,6 +1,5 @@
 package com.nimbachi.banco_app.application.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +10,6 @@ import com.nimbachi.banco_app.application.input.IMovimientoCommandUseCase;
 import com.nimbachi.banco_app.application.input.IMovimientoQueryUseCase;
 import com.nimbachi.banco_app.application.output.ICuentaPersistencePort;
 import com.nimbachi.banco_app.application.output.IMovimientoPersistencePort;
-import com.nimbachi.banco_app.domain.enums.TipoMovimiento;
 import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
@@ -30,7 +28,7 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     private final ICuentaPersistencePort cuentaPersistencePort;
     private final IMovimientoPersistencePort movimientoPersistencePort;
     private final IMovimientoRestMapper movimientoRestMapper;
-    private static final BigDecimal LIMITE_RETIRO_DIARIO = new BigDecimal("1000");
+    //
 
     @Override
     public Optional<Movimiento> obtenerPorId(Long id) {
@@ -41,46 +39,33 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
     @Override
     @Transactional
     public MovimientoResponse registrarMovimiento(Long cuentaId, Movimiento movimiento) {
-        log.info("Registrando movimiento: {} de ${} en cuenta ID: {}",
-                movimiento.getTipo(), movimiento.getValor(), movimiento.getCuentaId());
+        log.info("Iniciando registro de movimiento para cuenta ID: {}", cuentaId);
 
-        Optional<Cuenta> cuentaOptional = cuentaPersistencePort.findById(movimiento.getCuentaId());
-        if (cuentaOptional.isEmpty())
-            throw new RuntimeException("La cuenta con ID " + movimiento.getCuentaId() + " no existe");
+        Cuenta cuenta = cuentaPersistencePort.findById(cuentaId)
+            .orElseThrow(() -> new RuntimeException("La cuenta con ID " + cuentaId + " no existe"));
+        
+        List<Movimiento> retirosDelDia = movimientoPersistencePort.findRetirosByCuentaIdAndFecha(
+            cuentaId, 
+            LocalDate.now()
+        );
 
-        Cuenta cuenta = cuentaOptional.get();
+        Movimiento nuevoMovimiento = Movimiento.crear(
+            cuenta, 
+            movimiento.getTipo(), 
+            movimiento.getValor()
+        );
+        
+        // La cuenta ahora es responsable de aplicar las reglas de negocio.
+        cuenta.procesarMovimiento(nuevoMovimiento, retirosDelDia);
 
-        // REGLA: Validar que el valor sea correcto según el tipo
-        validarSignoMovimiento(movimiento);
-
-        // REGLA: Validar saldo disponible para retiros
-        if (movimiento.getTipo() == TipoMovimiento.RETIRO) {
-
-            BigDecimal saldoActual = cuenta.getSaldoDisponible();
-
-            if (saldoActual.compareTo(BigDecimal.ZERO) <= 0) {
-                log.warn("Intento de retiro con saldo no disponible. Cuenta ID: {}", movimiento.getCuentaId());
-                throw new RuntimeException("Saldo no disponible");
-            }
-
-            // REGLA 3: Validar cupo diario de retiros
-            validarCupoDiarioRetiros(movimiento, cuenta);
-        }
-
-        BigDecimal saldoActual = cuenta.getSaldoDisponible();
-        BigDecimal nuevoSaldo = saldoActual.add(movimiento.getValor());
-        movimiento.setSaldo(nuevoSaldo);
-
-        if (movimiento.getFecha() == null) {
-            movimiento.setFecha(LocalDate.now());
-        }
-
-        Movimiento movimientoGuardado = movimientoPersistencePort.save(movimiento);
-
-        cuenta.setSaldoDisponible(nuevoSaldo);
+        // 3. PERSISTIR ESTADO: Guardar los resultados en la base de datos.
+        // Asignamos el saldo resultante al movimiento antes de guardarlo.
+        nuevoMovimiento.setSaldo(cuenta.getSaldoDisponible());
+        
+        Movimiento movimientoGuardado = movimientoPersistencePort.save(nuevoMovimiento);
         cuentaPersistencePort.save(cuenta);
 
-        log.info("Movimiento registrado exitosamente. Nuevo saldo: ${}", nuevoSaldo);
+        log.info("Movimiento registrado. Nuevo saldo de cuenta {}: {}", cuenta.getNumeroCuenta(), cuenta.getSaldoDisponible());
         return movimientoRestMapper.domainToResponse(movimientoGuardado);
     }
 
@@ -90,54 +75,6 @@ public class MovimientoService implements IMovimientoCommandUseCase, IMovimiento
         // throw new RuntimeException("Los movimientos no se pueden eliminar. Se
         // preservan para auditoría");
         movimientoPersistencePort.delete(id);
-    }
-
-    /**
-     * Valida que el signo del valor sea correcto según el tipo de movimiento
-     * DEPOSITO debe ser POSITIVO, RETIRO debe ser NEGATIVO
-     * 
-     * @param movimiento Movimiento a validar
-     * @throws RuntimeException si el valor no cumple con la regla de signo según el
-     *                          tipo de movimiento
-     */
-    private void validarSignoMovimiento(Movimiento movimiento) {
-        if (movimiento.getTipo() == TipoMovimiento.DEPOSITO) {
-            if (movimiento.getValor().compareTo(BigDecimal.ZERO) <= 0)
-                throw new RuntimeException("El depósito debe ser un valor positivo");
-
-        } else if (movimiento.getTipo() == TipoMovimiento.RETIRO) {
-            if (movimiento.getValor().compareTo(BigDecimal.ZERO) >= 0)
-                throw new RuntimeException("El retiro debe ser un valor negativo");
-
-        }
-    }
-
-    /**
-     * Valida que no se exceda el límite diario de retiros ($1000)
-     */
-    private void validarCupoDiarioRetiros(Movimiento movimiento, Cuenta cuenta) {
-        LocalDate hoy = LocalDate.now();
-
-        // Obtener todos los retiros del día de hoy
-        List<Movimiento> retirosDia = cuenta.getMovimientos().stream()
-                .filter(m -> m.getTipo() == TipoMovimiento.RETIRO && m.getFecha().equals(hoy))
-                .toList();
-
-        // Calcular total de retiros del día
-        BigDecimal totalRetirosDia = retirosDia.stream()
-                .map(Movimiento::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .abs(); // Convertir a positivo para comparar
-
-        // El nuevo retiro viene negativo, convertir a positivo
-        BigDecimal nuevoRetiroPositivo = movimiento.getValor().abs();
-
-        // Validar que no se exceda el límite
-        if (totalRetirosDia.add(nuevoRetiroPositivo).compareTo(LIMITE_RETIRO_DIARIO) > 0) {
-            log.warn("Intento de exceder cupo diario. Retiros hoy: ${}, Nuevo retiro: ${}",
-                    totalRetirosDia, nuevoRetiroPositivo);
-            throw new RuntimeException("Cupo diario Excedido");
-        }
     }
 
     @Override

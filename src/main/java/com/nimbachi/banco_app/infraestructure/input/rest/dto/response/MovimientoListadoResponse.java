@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MovimientoListadoResponse {
 
+    private Long id;
+
     private Long cuentaId;
 
     private LocalDate fecha;
@@ -27,6 +29,7 @@ public class MovimientoListadoResponse {
     private String movimiento;
 
     public MovimientoListadoResponse(
+            Long id,
             Long cuentaId,
             LocalDate fecha,
             String numeroCuenta,
@@ -35,6 +38,7 @@ public class MovimientoListadoResponse {
             Boolean estado,
             String movimiento) {
 
+        this.id = id;
         this.cuentaId = cuentaId;
         this.fecha = fecha;
         this.numeroCuenta = numeroCuenta;

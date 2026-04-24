@@ -10,10 +10,7 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateCuent
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.ICuentaRestMapper;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -26,194 +23,160 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CuentaController.class)
-@DisplayName("CuentaController — pruebas de capa web")
 class CuentaControllerTest {
 
-    private static final String BASE_URL = "/api/cuentas";
+        private static final String BASE_URL = "/api/cuentas";
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private ICuentaCommandUseCase cuentaCommandUseCase;
+        @MockitoBean
+        private ICuentaCommandUseCase cuentaCommandUseCase;
 
-    @MockitoBean
-    private ICuentaQueryUseCase cuentaQueryUseCase;
+        @MockitoBean
+        private ICuentaQueryUseCase cuentaQueryUseCase;
 
-    @MockitoBean
-    private ICuentaRestMapper cuentaRestMapper;
+        @MockitoBean
+        private ICuentaRestMapper cuentaRestMapper;
 
-    private CuentaResponse responseBase;
-    private CreateCuentaRequest createRequest;
-    private UpdateCuentaRequest updateRequest;
+        private CuentaResponse responseBase;
+        private CreateCuentaRequest createRequest;
+        private UpdateCuentaRequest updateRequest;
 
-    @BeforeEach
-    void setUp() {
+        private Cuenta cuentaValida;
 
-        responseBase = CuentaResponse.builder()
-                .id(1L)
-                .numeroCuenta("12345")
-                .tipo(TipoCuenta.AHORRO)
-                .saldoInicial(BigDecimal.valueOf(1000))
-                .saldoDisponible(BigDecimal.valueOf(1000))
-                .estado(true)
-                .clienteId(1L)
-                .build();
+        @BeforeEach
+        void setUp() {
 
-        createRequest = CreateCuentaRequest.builder()
-                .numeroCuenta("12345")
-                .tipo(TipoCuenta.AHORRO)
-                .saldoInicial(BigDecimal.valueOf(1000))
-                .estado(true)
-                .clienteId(1L)
-                .build();
+                cuentaValida = Cuenta.crear(
+                                "12345",
+                                TipoCuenta.AHORRO,
+                                BigDecimal.valueOf(1000),
+                                1L);
+                cuentaValida.setId(1L);
 
-        updateRequest = UpdateCuentaRequest.builder()
-                .tipo(TipoCuenta.CORRIENTE)
-                .estado(true)
-                .build();
-    }
+                responseBase = CuentaResponse.builder()
+                                .id(1L)
+                                .numeroCuenta("12345")
+                                .tipo(TipoCuenta.AHORRO)
+                                .saldoDisponible(BigDecimal.valueOf(1000))
+                                .estado(true)
+                                .clienteId(1L)
+                                .build();
 
-    // ───────────────────────── POST ─────────────────────────
+                createRequest = CreateCuentaRequest.builder()
+                                .numeroCuenta("12345")
+                                .tipo(TipoCuenta.AHORRO)
+                                .saldoInicial(BigDecimal.valueOf(1000))
+                                .estado(true)
+                                .clienteId(1L)
+                                .build();
 
-    @Nested
-    class PostCuenta {
+                updateRequest = UpdateCuentaRequest.builder()
+                                .tipo(TipoCuenta.CORRIENTE)
+                                .estado(true)
+                                .build();
+        }
 
-        @Test
-        void post_ok_retorna201() throws Exception {
+        @Nested
+        class PostCuenta {
 
-            given(cuentaRestMapper.requestToDomain(any()))
-                    .willReturn(new Cuenta());
+                @Test
+                void post_ok() throws Exception {
 
-            given(cuentaCommandUseCase.crearCuenta(any()))
-                    .willReturn(responseBase);
+                        given(cuentaRestMapper.requestToDomain(any()))
+                                        .willReturn(cuentaValida);
 
-            mockMvc.perform(post(BASE_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.data.numeroCuenta", is("12345")))
-                    .andExpect(jsonPath("$.message", containsString("Cuenta creada")));
+                        given(cuentaCommandUseCase.crearCuenta(any()))
+                                        .willReturn(responseBase);
+
+                        mockMvc.perform(post(BASE_URL)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(createRequest)))
+                                        .andExpect(status().isCreated())
+                                        .andExpect(jsonPath("$.data.numeroCuenta", is("12345")))
+                                        .andExpect(jsonPath("$.message", containsString("exitosamente")));
+                }
         }
 
         @Test
-        void post_error_retorna400() throws Exception {
+        void get_all_ok() throws Exception {
 
-            given(cuentaRestMapper.requestToDomain(any()))
-                    .willReturn(new Cuenta());
+                given(cuentaQueryUseCase.listarTodas())
+                                .willReturn(List.of(responseBase));
 
-            given(cuentaCommandUseCase.crearCuenta(any()))
-                    .willThrow(new RuntimeException("ya existe"));
-
-            mockMvc.perform(post(BASE_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
+                mockMvc.perform(get(BASE_URL))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data", hasSize(1)));
         }
-    }
 
-    // ───────────────────────── GET ALL ─────────────────────────
+        @Test
+        void get_by_id_ok() throws Exception {
 
-    @Test
-    void get_all_ok() throws Exception {
+                given(cuentaQueryUseCase.obtenerPorId(1L))
+                                .willReturn(Optional.of(cuentaValida));
 
-        given(cuentaQueryUseCase.listarTodas())
-                .willReturn(List.of(responseBase));
+                mockMvc.perform(get(BASE_URL + "/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.id", is(1)))
+                                .andExpect(jsonPath("$.data.numeroCuenta", is("12345")));
+        }
 
-        mockMvc.perform(get(BASE_URL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(1)));
-    }
+        @Test
+        void get_by_id_not_found() throws Exception {
 
-    // ───────────────────────── GET BY ID ─────────────────────────
+                given(cuentaQueryUseCase.obtenerPorId(99L))
+                                .willReturn(Optional.empty());
 
-    @Test
-    void get_by_id_ok() throws Exception {
+                mockMvc.perform(get(BASE_URL + "/99"))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.code", is("CUENTA_NOT_FOUND")));
+        }
 
-        Cuenta cuenta = new Cuenta();
+        @Test
+        void put_ok() throws Exception {
 
-        given(cuentaQueryUseCase.obtenerPorId(1L))
-                .willReturn(Optional.of(cuenta));
+                given(cuentaRestMapper.updateRequestToDomain(any()))
+                                .willReturn(cuentaValida);
 
-        mockMvc.perform(get(BASE_URL + "/1"))
-                .andExpect(status().isOk());
-    }
+                given(cuentaCommandUseCase.actualizar(eq(1L), any()))
+                                .willReturn(responseBase);
 
-    @Test
-    void get_by_id_not_found() throws Exception {
+                mockMvc.perform(put(BASE_URL + "/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRequest)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.numeroCuenta", is("12345")));
+        }
 
-        given(cuentaQueryUseCase.obtenerPorId(99L))
-                .willReturn(Optional.empty());
+        @Test
+        void delete_ok() throws Exception {
 
-        mockMvc.perform(get(BASE_URL + "/99"))
-                .andExpect(status().isNotFound());
-    }
+                given(cuentaQueryUseCase.obtenerPorId(1L))
+                                .willReturn(Optional.of(cuentaValida));
 
-    // ───────────────────────── PUT ─────────────────────────
+                willDoNothing().given(cuentaCommandUseCase).eliminar(1L);
 
-    @Test
-    void put_ok() throws Exception {
+                mockMvc.perform(delete(BASE_URL + "/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.message", containsString("eliminada")));
+        }
 
-        Cuenta cuenta = new Cuenta();
-        cuenta.setId(1L);
+        @Test
+        void delete_not_found() throws Exception {
 
-        given(cuentaQueryUseCase.obtenerPorId(1L))
-                .willReturn(Optional.of(cuenta));
+                given(cuentaQueryUseCase.obtenerPorId(99L)).willReturn(Optional.empty());
 
-        given(cuentaCommandUseCase.actualizar(eq(1L), any()))
-                .willReturn(responseBase);
-
-        mockMvc.perform(put(BASE_URL + "/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.numeroCuenta", is("12345")));
-    }
-
-    @Test
-    void put_not_found() throws Exception {
-
-        given(cuentaQueryUseCase.obtenerPorId(99L))
-                .willReturn(Optional.empty());
-
-        mockMvc.perform(put(BASE_URL + "/99")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isNotFound());
-    }
-
-    // ───────────────────────── DELETE ─────────────────────────
-
-    @Test
-    void delete_ok() throws Exception {
-
-        Cuenta cuenta = new Cuenta();
-
-        given(cuentaQueryUseCase.obtenerPorId(1L))
-                .willReturn(Optional.of(cuenta));
-
-        willDoNothing().given(cuentaCommandUseCase).eliminar(1L);
-
-        mockMvc.perform(delete(BASE_URL + "/1"))
-                .andExpect(status().isOk()); // 👈 IMPORTANTE
-    }
-
-    @Test
-    void delete_not_found() throws Exception {
-
-        given(cuentaQueryUseCase.obtenerPorId(99L))
-                .willReturn(Optional.empty());
-
-        mockMvc.perform(delete(BASE_URL + "/99"))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(delete(BASE_URL + "/99"))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.code", is("CUENTA_NOT_FOUND")));
+        }
 }

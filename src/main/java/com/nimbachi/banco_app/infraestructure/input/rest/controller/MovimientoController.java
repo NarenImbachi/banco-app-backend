@@ -35,11 +35,7 @@ public class MovimientoController {
                         @Valid @RequestBody CreateMovimientoRequest request) {
                 log.info("POST /api/movimientos - Registrando movimiento en cuenta: {}", request.getCuentaId());
 
-                Movimiento movimiento = new Movimiento();
-                movimiento = movimientoRestMapper.requestToDomain(request);
-                /*movimiento.setTipo(request.getTipo());
-                movimiento.setValor(request.getValor());
-                movimiento.setCuentaId(request.getCuentaId());*/
+                Movimiento movimiento = movimientoRestMapper.requestToDomain(request);
 
                 MovimientoResponse movimientoRegistrado = movimientoCommandUseCase.registrarMovimiento(movimiento.getCuentaId(), movimiento);
                 return new ResponseEntity<>(

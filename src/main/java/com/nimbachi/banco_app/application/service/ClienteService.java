@@ -28,15 +28,22 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
     @Transactional
     public ClienteResponse crearCliente(Cliente cliente) {
         log.info("Creando nuevo cliente: {}", cliente.getClienteId());
-
-        // Validar que clienteId sea único
-        if (clientePersistencePort.existsByClienteId(cliente.getClienteId())) {
+        if (clientePersistencePort.existsByClienteId(cliente.getClienteId())) 
             throw new RuntimeException("El cliente ID " + cliente.getClienteId() + " ya existe");
-        }
+        
 
-        cliente.setEstado(true); // Activo por defecto
+        Cliente nuevoCliente = Cliente.crearCliente(
+            cliente.getClienteId(), 
+            cliente.getContrasena(), 
+            cliente.getNombre(), 
+            cliente.getGenero(), 
+            cliente.getEdad(), 
+            cliente.getIdentificacion(), 
+            cliente.getDireccion(), 
+            cliente.getTelefono()
+        );
 
-        Cliente clienteCreado = clientePersistencePort.save(cliente);
+        Cliente clienteCreado = clientePersistencePort.save(nuevoCliente);
         log.info("Cliente creado exitosamente con ID: {}", clienteCreado.getId());
 
         return clienteRestMapper.domainToResponse(clienteCreado);
@@ -57,12 +64,14 @@ public class ClienteService implements IClienteCommandUseCase, IClienteQueryUseC
         if (!clienteExistente.getClienteId().equals(clienteActualizado.getClienteId()))
             throw new RuntimeException("No se puede cambiar el clienteId");
 
-        clienteExistente.setNombre(clienteActualizado.getNombre());
-        clienteExistente.setGenero(clienteActualizado.getGenero());
-        clienteExistente.setEdad(clienteActualizado.getEdad());
-        clienteExistente.setDireccion(clienteActualizado.getDireccion());
-        clienteExistente.setTelefono(clienteActualizado.getTelefono());
-        clienteExistente.setEstado(clienteActualizado.getEstado());
+        clienteExistente.actualizarDatos(
+            clienteActualizado.getNombre(),
+            clienteActualizado.getGenero(),
+            clienteActualizado.getEdad(),
+            clienteActualizado.getDireccion(),
+            clienteActualizado.getTelefono(),
+            clienteActualizado.isEstado()
+        );
 
         Cliente clienteGuardado = clientePersistencePort.save(clienteExistente);
         log.info("Cliente actualizado exitosamente");

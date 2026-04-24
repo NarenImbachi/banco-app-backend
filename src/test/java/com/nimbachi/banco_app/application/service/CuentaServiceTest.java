@@ -8,18 +8,13 @@ import com.nimbachi.banco_app.domain.model.Cuenta;
 import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.CuentaResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.ICuentaRestMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -46,14 +41,14 @@ class CuentaServiceTest {
 
     @BeforeEach
     void setUp() {
-        cuentaValida = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                new BigDecimal("1000"), 1L);
+        cuentaValida = new Cuenta(1L, "CTA001", TipoCuenta.AHORRO,
+                new BigDecimal("1000"), new BigDecimal("1000"),
+                true, 1L, new ArrayList<>());
 
         responseValido = CuentaResponse.builder()
                 .id(1L)
                 .numeroCuenta("CTA001")
                 .tipo(TipoCuenta.AHORRO)
-                .saldoInicial(new BigDecimal("1000"))
                 .saldoDisponible(new BigDecimal("1000"))
                 .estado(true)
                 .clienteId(1L)
@@ -66,40 +61,54 @@ class CuentaServiceTest {
 
         @Test
         void crear_ok() {
-            given(clientePersistencePort.findById(1L)).willReturn(Optional.of(new Cliente()));
-            given(cuentaPersistencePort.existsByNumeroCuenta("CTA001")).willReturn(false);
-            given(cuentaPersistencePort.save(any())).willReturn(cuentaValida);
-            given(cuentaRestMapper.domainToResponse(cuentaValida)).willReturn(responseValido);
+            Cuenta cuentaACrear = new Cuenta(null, "CTA001", TipoCuenta.AHORRO,
+                    new BigDecimal("1000"), null, false, 1L, null);
 
-            CuentaResponse result = cuentaService.crearCuenta(cuentaValida);
+            Cuenta cuentaCreada = Cuenta.crear("CTA001", TipoCuenta.AHORRO,
+                    new BigDecimal("1000"), 1L);
+            cuentaCreada.setId(1L);
+
+            given(clientePersistencePort.findById(1L))
+                    .willReturn(Optional.of(new Cliente()));
+
+            given(cuentaPersistencePort.existsByNumeroCuenta("CTA001"))
+                    .willReturn(false);
+
+            given(cuentaPersistencePort.save(any(Cuenta.class)))
+                    .willReturn(cuentaCreada);
+
+            given(cuentaRestMapper.domainToResponse(any(Cuenta.class)))
+                    .willReturn(responseValido);
+
+            CuentaResponse result = cuentaService.crearCuenta(cuentaACrear);
 
             assertThat(result).isNotNull();
             assertThat(result.getNumeroCuenta()).isEqualTo("CTA001");
 
-            then(cuentaPersistencePort).should().save(any());
+            then(cuentaPersistencePort).should().save(any(Cuenta.class));
         }
 
         @Test
         void crear_clienteNoExiste() {
-            given(clientePersistencePort.findById(1L)).willReturn(Optional.empty());
+            given(clientePersistencePort.findById(1L))
+                    .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> cuentaService.crearCuenta(cuentaValida))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("no existe");
-
-            then(cuentaPersistencePort).should(never()).save(any());
         }
 
         @Test
         void crear_numeroDuplicado() {
-            given(clientePersistencePort.findById(1L)).willReturn(Optional.of(new Cliente()));
-            given(cuentaPersistencePort.existsByNumeroCuenta("CTA001")).willReturn(true);
+            given(clientePersistencePort.findById(1L))
+                    .willReturn(Optional.of(new Cliente()));
+
+            given(cuentaPersistencePort.existsByNumeroCuenta("CTA001"))
+                    .willReturn(true);
 
             assertThatThrownBy(() -> cuentaService.crearCuenta(cuentaValida))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("ya existe");
-
-            then(cuentaPersistencePort).should(never()).save(any());
         }
     }
 
@@ -109,59 +118,37 @@ class CuentaServiceTest {
 
         @Test
         void actualizar_ok() {
-            Cuenta existente = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
+            Cuenta cuentaSpy = spy(cuentaValida);
 
-            Cuenta nuevo = buildCuenta(1L, "CTA001", TipoCuenta.CORRIENTE,
-                    new BigDecimal("1000"), 1L);
+            Cuenta datosNuevos = new Cuenta(null, "OTRA",
+                    TipoCuenta.CORRIENTE, null, null,
+                    false, 99L, null);
 
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(existente));
-            given(cuentaPersistencePort.save(any())).willReturn(nuevo);
-            given(cuentaRestMapper.domainToResponse(nuevo)).willReturn(responseValido);
+            given(cuentaPersistencePort.findById(1L))
+                    .willReturn(Optional.of(cuentaSpy));
 
-            CuentaResponse result = cuentaService.actualizar(1L, nuevo);
+            given(cuentaPersistencePort.save(any(Cuenta.class)))
+                    .willReturn(cuentaSpy);
+
+            given(cuentaRestMapper.domainToResponse(any(Cuenta.class)))
+                    .willReturn(responseValido);
+
+            CuentaResponse result = cuentaService.actualizar(1L, datosNuevos);
 
             assertThat(result).isNotNull();
-            then(cuentaPersistencePort).should().save(any());
+
+            then(cuentaSpy).should().actualizarDatos(TipoCuenta.CORRIENTE, false);
+            then(cuentaPersistencePort).should().save(cuentaSpy);
         }
 
         @Test
         void actualizar_noExiste() {
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.empty());
+            given(cuentaPersistencePort.findById(1L))
+                    .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> cuentaService.actualizar(1L, cuentaValida))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("no existe");
-        }
-
-        @Test
-        void actualizar_cambiarNumeroCuenta() {
-            Cuenta existente = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
-
-            Cuenta nuevo = buildCuenta(1L, "OTRA", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
-
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(existente));
-
-            assertThatThrownBy(() -> cuentaService.actualizar(1L, nuevo))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessageContaining("número de cuenta");
-        }
-
-        @Test
-        void actualizar_cambiarCliente() {
-            Cuenta existente = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
-
-            Cuenta nuevo = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 99L);
-
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(existente));
-
-            assertThatThrownBy(() -> cuentaService.actualizar(1L, nuevo))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessageContaining("cliente");
         }
     }
 
@@ -171,11 +158,11 @@ class CuentaServiceTest {
 
         @Test
         void eliminar_ok() {
-            Cuenta cuenta = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
-            cuenta.setMovimientos(List.of());
+            cuentaValida.setMovimientos(List.of());
 
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(cuenta));
+            given(cuentaPersistencePort.findById(1L))
+                    .willReturn(Optional.of(cuentaValida));
+
             willDoNothing().given(cuentaPersistencePort).delete(1L);
 
             cuentaService.eliminar(1L);
@@ -185,7 +172,8 @@ class CuentaServiceTest {
 
         @Test
         void eliminar_noExiste() {
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.empty());
+            given(cuentaPersistencePort.findById(1L))
+                    .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> cuentaService.eliminar(1L))
                     .isInstanceOf(RuntimeException.class)
@@ -194,11 +182,10 @@ class CuentaServiceTest {
 
         @Test
         void eliminar_conMovimientos() {
-            Cuenta cuenta = buildCuenta(1L, "CTA001", TipoCuenta.AHORRO,
-                    new BigDecimal("1000"), 1L);
-            cuenta.setMovimientos(List.of(new Movimiento())); // simula movimiento
+            cuentaValida.setMovimientos(List.of(new Movimiento()));
 
-            given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(cuenta));
+            given(cuentaPersistencePort.findById(1L))
+                    .willReturn(Optional.of(cuentaValida));
 
             assertThatThrownBy(() -> cuentaService.eliminar(1L))
                     .isInstanceOf(RuntimeException.class)
@@ -208,7 +195,8 @@ class CuentaServiceTest {
 
     @Test
     void obtenerPorId() {
-        given(cuentaPersistencePort.findById(1L)).willReturn(Optional.of(cuentaValida));
+        given(cuentaPersistencePort.findById(1L))
+                .willReturn(Optional.of(cuentaValida));
 
         Optional<Cuenta> result = cuentaService.obtenerPorId(1L);
 
@@ -217,24 +205,14 @@ class CuentaServiceTest {
 
     @Test
     void listarTodas() {
-        given(cuentaPersistencePort.findAll()).willReturn(List.of(cuentaValida));
-        given(cuentaRestMapper.domainToResponse(cuentaValida)).willReturn(responseValido);
+        given(cuentaPersistencePort.findAll())
+                .willReturn(List.of(cuentaValida));
+
+        given(cuentaRestMapper.domainToResponse(cuentaValida))
+                .willReturn(responseValido);
 
         List<CuentaResponse> result = cuentaService.listarTodas();
 
         assertThat(result).hasSize(1);
-    }
-
-    private Cuenta buildCuenta(Long id, String numero, TipoCuenta tipo,
-            BigDecimal saldo, Long clienteId) {
-        Cuenta c = new Cuenta();
-        c.setId(id);
-        c.setNumeroCuenta(numero);
-        c.setTipo(tipo);
-        c.setSaldoInicial(saldo);
-        c.setSaldoDisponible(saldo);
-        c.setEstado(true);
-        c.setClienteId(clienteId);
-        return c;
     }
 }

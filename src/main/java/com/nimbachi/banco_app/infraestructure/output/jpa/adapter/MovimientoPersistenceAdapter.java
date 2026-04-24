@@ -66,4 +66,11 @@ public class MovimientoPersistenceAdapter implements IMovimientoPersistencePort 
         return movimientoRepository.obtenerListadoMovimientos();
 
     }
+
+    @Override
+    public List<Movimiento> findRetirosByCuentaIdAndFecha(Long cuentaId, LocalDate now) {
+        return movimientoRepository.findRetirosByCuentaIdAndFecha(cuentaId, now).stream()
+                .map(movimientoEntityMapper::entityToDomain)
+                .toList();
+    }
 }

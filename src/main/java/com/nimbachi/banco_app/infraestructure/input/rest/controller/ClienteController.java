@@ -34,8 +34,7 @@ public class ClienteController {
     public ResponseEntity<ApiResponse<ClienteResponse>> crearCliente(@Valid @RequestBody CreateClienteRequest request) {
         log.info("POST /api/clientes - Creando nuevo cliente: {}", request.getClienteId());
         
-        Cliente cliente = new Cliente();
-        cliente = clienteRestMapper.requestToDomain(request);
+        Cliente cliente = clienteRestMapper.requestToDomain(request);
         ClienteResponse clienteCreado = clienteCommandUseCase.crearCliente(cliente);
 
         return new ResponseEntity<>(ApiResponse.success(clienteCreado, "Cliente creado exitosamente"), HttpStatus.CREATED);
@@ -79,7 +78,6 @@ public class ClienteController {
         if (request.getNombre() != null) cliente.setNombre(request.getNombre());
         if (request.getDireccion() != null) cliente.setDireccion(request.getDireccion());
         if (request.getTelefono() != null) cliente.setTelefono(request.getTelefono());
-        cliente.setEstado(request.isEstado());
 
         ClienteResponse clienteActualizado = clienteCommandUseCase.actualizar(cliente.getId(), cliente);
         return new ResponseEntity<>(ApiResponse.success(clienteActualizado, "Cliente actualizado exitosamente"), HttpStatus.OK);

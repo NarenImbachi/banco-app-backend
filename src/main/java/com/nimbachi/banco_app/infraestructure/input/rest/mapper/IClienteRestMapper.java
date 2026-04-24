@@ -15,6 +15,10 @@ public interface IClienteRestMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "cuentas", ignore = true)
+    @Mapping(target = "estado", expression = "java(true)") // Por defecto, el cliente se crea como activo
+    @Mapping(target = "clienteId", source = "clienteId")
+    @Mapping(target = "contrasena", source = "contrasena")
+    @Mapping(target = "nombre", source = "nombre")
     Cliente requestToDomain(CreateClienteRequest request);
 
     @Mapping(

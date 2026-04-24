@@ -10,10 +10,7 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.Movimiento
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IMovimientoRestMapper;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -27,120 +24,128 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MovimientoController.class)
-@DisplayName("MovimientoController — pruebas web")
 class MovimientoControllerTest {
 
-    private static final String BASE_URL = "/api/movimientos";
+        private static final String BASE_URL = "/api/movimientos";
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private IMovimientoCommandUseCase movimientoCommandUseCase;
+        @MockitoBean
+        private IMovimientoCommandUseCase movimientoCommandUseCase;
 
-    @MockitoBean
-    private IMovimientoQueryUseCase movimientoQueryUseCase;
+        @MockitoBean
+        private IMovimientoQueryUseCase movimientoQueryUseCase;
 
-    @MockitoBean
-    private IMovimientoRestMapper movimientoRestMapper;
+        @MockitoBean
+        private IMovimientoRestMapper movimientoRestMapper;
 
-    private CreateMovimientoRequest request;
-    private MovimientoResponse response;
+        private CreateMovimientoRequest request;
+        private MovimientoResponse response;
 
-    @BeforeEach
-    void setUp() {
+        private Movimiento movimientoValido;
 
-        request = CreateMovimientoRequest.builder()
-                .fecha(LocalDate.now())
-                .tipo(TipoMovimiento.DEPOSITO)
-                .valor(BigDecimal.valueOf(500))
-                .cuentaId(1L)
-                .build();
+        @BeforeEach
+        void setUp() {
 
-        response = new MovimientoResponse();
-        response.setId(1L);
-    }
+                request = CreateMovimientoRequest.builder()
+                                .fecha(LocalDate.now())
+                                .tipo(TipoMovimiento.DEPOSITO)
+                                .valor(BigDecimal.valueOf(500))
+                                .cuentaId(1L)
+                                .build();
 
-    @Nested
-    class PostMovimiento {
+                movimientoValido = Movimiento.builder()
+                                .id(1L)
+                                .cuentaId(1L)
+                                .tipo(TipoMovimiento.DEPOSITO)
+                                .valor(BigDecimal.valueOf(500))
+                                .fecha(LocalDate.now())
+                                .build();
 
-        @Test
-        void post_ok() throws Exception {
+                response = new MovimientoResponse();
+                response.setId(1L);
+        }
 
-            given(movimientoRestMapper.requestToDomain(any()))
-                    .willReturn(new Movimiento());
+        @Nested
+        class PostMovimiento {
 
-            given(movimientoCommandUseCase.registrarMovimiento(eq(1L), any()))
-                    .willReturn(response);
+                @Test
+                void post_ok() throws Exception {
 
-            mockMvc.perform(post(BASE_URL)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.message", containsString("Movimiento registrado")));
+                        given(movimientoRestMapper.requestToDomain(any()))
+                                        .willReturn(movimientoValido);
+
+                        given(movimientoCommandUseCase.registrarMovimiento(eq(1L), any()))
+                                        .willReturn(response);
+
+                        mockMvc.perform(post(BASE_URL)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                                        .andExpect(status().isCreated())
+                                        .andExpect(jsonPath("$.message", containsString("exitosamente")))
+                                        .andExpect(jsonPath("$.data.id", is(1)));
+                }
+
+                @Test
+                void post_error() throws Exception {
+
+                        given(movimientoRestMapper.requestToDomain(any()))
+                                        .willReturn(movimientoValido);
+
+                        given(movimientoCommandUseCase.registrarMovimiento(eq(1L), any()))
+                                        .willThrow(new RuntimeException("Saldo no disponible"));
+
+                        mockMvc.perform(post(BASE_URL)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                                        .andExpect(status().isBadRequest());
+                }
         }
 
         @Test
-        void post_error_retorna400() throws Exception {
+        void delete_ok() throws Exception {
 
-            Movimiento movimientoMock = new Movimiento();
-            movimientoMock.setCuentaId(1L);
+                given(movimientoQueryUseCase.obtenerPorId(1L))
+                                .willReturn(Optional.of(movimientoValido));
 
-            given(movimientoRestMapper.requestToDomain(any()))
-                    .willReturn(movimientoMock);
+                willDoNothing().given(movimientoCommandUseCase).eliminar(1L);
 
-            given(movimientoCommandUseCase.registrarMovimiento(eq(1L), any()))
-                    .willThrow(new RuntimeException("Saldo no disponible"));
-
-            mockMvc.perform(post(BASE_URL)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
+                mockMvc.perform(delete(BASE_URL + "/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.message", containsString("eliminado")));
         }
-    }
 
-    @Test
-    void delete_ok() throws Exception {
+        @Test
+        void delete_not_found() throws Exception {
 
-        given(movimientoQueryUseCase.obtenerPorId(1L))
-                .willReturn(Optional.of(new Movimiento()));
+                given(movimientoQueryUseCase.obtenerPorId(99L))
+                                .willReturn(Optional.empty());
 
-        willDoNothing().given(movimientoCommandUseCase).eliminar(1L);
+                mockMvc.perform(delete(BASE_URL + "/99"))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.code", is("MOVIMIENTO_NOT_FOUND")));
+        }
 
-        mockMvc.perform(delete(BASE_URL + "/1"))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void get_listado_ok() throws Exception {
 
-    @Test
-    void delete_not_found() throws Exception {
+                MovimientoListadoResponse listado = new MovimientoListadoResponse();
+                listado.setCuentaId(1L);
 
-        given(movimientoQueryUseCase.obtenerPorId(99L))
-                .willReturn(Optional.empty());
+                given(movimientoQueryUseCase.listarMovimientosFormateados())
+                                .willReturn(List.of(listado));
 
-        mockMvc.perform(delete(BASE_URL + "/99"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void get_listado_ok() throws Exception {
-
-        MovimientoListadoResponse listado = new MovimientoListadoResponse();
-        listado.setCuentaId(1L);
-
-        given(movimientoQueryUseCase.listarMovimientosFormateados())
-                .willReturn(List.of(listado));
-
-        mockMvc.perform(get(BASE_URL + "/listado"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(1)));
-    }
+                mockMvc.perform(get(BASE_URL + "/listado"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data", hasSize(1)));
+        }
 }

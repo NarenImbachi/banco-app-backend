@@ -1,6 +1,8 @@
 package com.nimbachi.banco_app.application.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
@@ -26,130 +28,134 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ReporteServiceTest {
 
-    @Mock
-    private IClientePersistencePort clientePersistencePort;
+        @Mock
+        private IClientePersistencePort clientePersistencePort;
 
-    @Mock
-    private ICuentaPersistencePort cuentaPersistencePort;
+        @Mock
+        private ICuentaPersistencePort cuentaPersistencePort;
 
-    @Mock
-    private IMovimientoPersistencePort movimientoPersistencePort;
+        @Mock
+        private IMovimientoPersistencePort movimientoPersistencePort;
 
-    @InjectMocks
-    private ReporteService reporteService;
+        @InjectMocks
+        private ReporteService reporteService;
 
-    private Cliente cliente;
-    private Cuenta cuenta;
+        private Cliente cliente;
+        private Cuenta cuenta;
 
-    @BeforeEach
-    void setUp() {
-        cliente = new Cliente();
-        cliente.setId(1L);
-        cliente.setNombre("Juan");
+        @BeforeEach
+        void setUp() {
+                cliente = Cliente.crearCliente(
+                                "cli001",
+                                "1234",
+                                "Juan",
+                                "M",
+                                30,
+                                "123456789",
+                                "Calle 123",
+                                "3001234567");
 
-        cuenta = new Cuenta();
-        cuenta.setId(1L);
-        cuenta.setNumeroCuenta("12345");
-        cuenta.setTipo(TipoCuenta.AHORRO);
-        cuenta.setSaldoInicial(new BigDecimal("1000"));
-        cuenta.setEstado(true);
-    }
+                cuenta = new Cuenta(1L, "12345", TipoCuenta.AHORRO,
+                                new BigDecimal("1000"), new BigDecimal("1000"),
+                                true, 1L, List.of());
 
-    @Test
-    void generarReporte_conMovimientos_ok() {
+        }
 
-        LocalDate inicio = LocalDate.now().minusDays(5);
-        LocalDate fin = LocalDate.now();
+        @Test
+        void generarReporte_conMovimientos_ok() {
 
-        Movimiento mov1 = Movimiento.builder()
-                .fecha(inicio.plusDays(1))
-                .valor(new BigDecimal("200"))
-                .saldo(new BigDecimal("1200"))
-                .build();
+                LocalDate inicio = LocalDate.now().minusDays(5);
+                LocalDate fin = LocalDate.now();
 
-        Movimiento mov2 = Movimiento.builder()
-                .fecha(inicio.plusDays(2))
-                .valor(new BigDecimal("-100"))
-                .saldo(new BigDecimal("1100"))
-                .build();
+                Movimiento mov1 = Movimiento.builder()
+                                .fecha(inicio.plusDays(1))
+                                .valor(new BigDecimal("200"))
+                                .saldo(new BigDecimal("1200"))
+                                .build();
 
-        when(clientePersistencePort.findById(1L))
-                .thenReturn(Optional.of(cliente));
+                Movimiento mov2 = Movimiento.builder()
+                                .fecha(inicio.plusDays(2))
+                                .valor(new BigDecimal("-100"))
+                                .saldo(new BigDecimal("1100"))
+                                .build();
 
-        when(cuentaPersistencePort.findByClienteId(1L))
-                .thenReturn(List.of(cuenta));
+                when(clientePersistencePort.findById(1L))
+                                .thenReturn(Optional.of(cliente));
 
-        when(movimientoPersistencePort.findByCuentaIdAndFechaBetween(any(), any(), any()))
-                .thenReturn(List.of(mov1, mov2));
+                when(cuentaPersistencePort.findByClienteId(1L))
+                                .thenReturn(List.of(cuenta));
 
-        List<ReporteMovimientoResponse> result =
-                reporteService.generarReporteEstadoCuenta(1L, inicio, fin);
+                when(movimientoPersistencePort.findByCuentaIdAndFechaBetween(eq(1L), any(), any()))
+                                .thenReturn(List.of(mov1, mov2));
 
-        assertEquals(2, result.size());
-        assertEquals("Juan", result.get(0).getCliente());
-        assertEquals("12345", result.get(0).getNumeroCuenta());
-    }
+                List<ReporteMovimientoResponse> result = reporteService.generarReporteEstadoCuenta(1L, inicio, fin);
 
-    @Test
-    void generarReporte_sinMovimientos_ok() {
+                assertEquals(2, result.size());
 
-        LocalDate inicio = LocalDate.now().minusDays(5);
-        LocalDate fin = LocalDate.now();
+                ReporteMovimientoResponse fila1 = result.get(0);
 
-        when(clientePersistencePort.findById(1L))
-                .thenReturn(Optional.of(cliente));
+                assertEquals("Juan", fila1.getCliente());
+                assertEquals("12345", fila1.getNumeroCuenta());
+                assertEquals("AHORRO", fila1.getTipoCuenta());
 
-        when(cuentaPersistencePort.findByClienteId(1L))
-                .thenReturn(List.of(cuenta));
+                assertEquals(new BigDecimal("1000"), fila1.getSaldoInicial()); // 1200 - 200
+                assertEquals(new BigDecimal("200"), fila1.getMovimiento());
+                assertEquals(new BigDecimal("1200"), fila1.getSaldoDisponible());
+        }
 
-        when(movimientoPersistencePort.findByCuentaIdAndFechaBetween(any(), any(), any()))
-                .thenReturn(List.of());
+        @Test
+        void generarReporte_sinMovimientos_ok() {
 
-        List<ReporteMovimientoResponse> result =
-                reporteService.generarReporteEstadoCuenta(1L, inicio, fin);
+                LocalDate inicio = LocalDate.now().minusDays(5);
+                LocalDate fin = LocalDate.now();
 
-        assertTrue(result.isEmpty());
-    }
+                when(clientePersistencePort.findById(1L))
+                                .thenReturn(Optional.of(cliente));
 
-    @Test
-    void generarReporte_clienteNoExiste_lanzaError() {
+                when(cuentaPersistencePort.findByClienteId(1L))
+                                .thenReturn(List.of(cuenta));
 
-        when(clientePersistencePort.findById(1L))
-                .thenReturn(Optional.empty());
+                when(movimientoPersistencePort.findByCuentaIdAndFechaBetween(eq(1L), any(), any()))
+                                .thenReturn(List.of());
 
-        assertThrows(RuntimeException.class, () ->
-                reporteService.generarReporteEstadoCuenta(
-                        1L,
-                        LocalDate.now().minusDays(1),
-                        LocalDate.now())
-        );
-    }
+                List<ReporteMovimientoResponse> result = reporteService.generarReporteEstadoCuenta(1L, inicio, fin);
 
-    @Test
-    void generarReporte_fechaInvalida_lanzaError() {
+                assertTrue(result.isEmpty());
+        }
 
-        when(clientePersistencePort.findById(1L))
-                .thenReturn(Optional.of(cliente));
+        @Test
+        void generarReporte_clienteNoExiste_lanzaError() {
 
-        assertThrows(RuntimeException.class, () ->
-                reporteService.generarReporteEstadoCuenta(
-                        1L,
-                        LocalDate.now(),
-                        LocalDate.now().minusDays(1))
-        );
-    }
+                when(clientePersistencePort.findById(1L))
+                                .thenReturn(Optional.empty());
 
-    @Test
-    void generarReporte_rangoMayor90Dias_lanzaError() {
+                assertThrows(RuntimeException.class, () -> reporteService.generarReporteEstadoCuenta(
+                                1L,
+                                LocalDate.now().minusDays(1),
+                                LocalDate.now()));
+        }
 
-        when(clientePersistencePort.findById(1L))
-                .thenReturn(Optional.of(cliente));
+        @Test
+        void generarReporte_fechaInvalida_lanzaError() {
 
-        assertThrows(RuntimeException.class, () ->
-                reporteService.generarReporteEstadoCuenta(
-                        1L,
-                        LocalDate.now().minusDays(100),
-                        LocalDate.now())
-        );
-    }
+                when(clientePersistencePort.findById(1L))
+                                .thenReturn(Optional.of(cliente));
+
+                assertThrows(RuntimeException.class, () -> reporteService.generarReporteEstadoCuenta(
+                                1L,
+                                LocalDate.now(),
+                                LocalDate.now().minusDays(1)));
+        }
+
+        @Test
+        void generarReporte_rangoMayor90Dias_lanzaError() {
+
+                when(clientePersistencePort.findById(1L))
+                                .thenReturn(Optional.of(cliente));
+
+                assertThrows(RuntimeException.class, () -> reporteService.generarReporteEstadoCuenta(
+                                1L,
+                                LocalDate.now().minusDays(100),
+                                LocalDate.now()));
+        }
 }

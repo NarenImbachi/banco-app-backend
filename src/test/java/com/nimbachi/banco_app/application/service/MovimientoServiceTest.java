@@ -1,13 +1,5 @@
 package com.nimbachi.banco_app.application.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import com.nimbachi.banco_app.application.output.ICuentaPersistencePort;
 import com.nimbachi.banco_app.application.output.IMovimientoPersistencePort;
 import com.nimbachi.banco_app.domain.enums.TipoMovimiento;
@@ -16,201 +8,227 @@ import com.nimbachi.banco_app.domain.model.Movimiento;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IMovimientoRestMapper;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class MovimientoServiceTest {
 
-    @Mock
-    private ICuentaPersistencePort cuentaPersistencePort;
+        @Mock
+        private ICuentaPersistencePort cuentaPersistencePort;
 
-    @Mock
-    private IMovimientoPersistencePort movimientoPersistencePort;
+        @Mock
+        private IMovimientoPersistencePort movimientoPersistencePort;
 
-    @Mock
-    private IMovimientoRestMapper movimientoRestMapper;
+        @Mock
+        private IMovimientoRestMapper movimientoRestMapper;
 
-    @InjectMocks
-    private MovimientoService movimientoService;
+        @InjectMocks
+        private MovimientoService movimientoService;
 
-    private Cuenta cuenta;
+        private Cuenta cuenta;
 
-    @BeforeEach
-    void setUp() {
-        cuenta = new Cuenta();
-        cuenta.setId(1L);
-        cuenta.setSaldoDisponible(new BigDecimal("1000"));
-        cuenta.setMovimientos(List.of());
-    }
+        @BeforeEach
+        void setUp() {
+                cuenta = new Cuenta(1L, "12345", null,
+                                new BigDecimal("1000"), new BigDecimal("1000"),
+                                true, 1L, new ArrayList<>());
+        }
 
-    @Test
-    void registrarMovimiento_deposito_ok() {
+        @Test
+        void registrarMovimiento_deposito_ok() {
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.DEPOSITO)
-                .valor(new BigDecimal("200"))
-                .cuentaId(1L)
-                .build();
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.DEPOSITO)
+                                .valor(new BigDecimal("200"))
+                                .build();
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        when(movimientoPersistencePort.save(any()))
-                .thenAnswer(inv -> inv.getArgument(0));
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of());
 
-        when(movimientoRestMapper.domainToResponse(any()))
-                .thenReturn(new MovimientoResponse());
+                given(movimientoPersistencePort.save(any()))
+                                .willAnswer(inv -> inv.getArgument(0));
 
-        MovimientoResponse response =
-                movimientoService.registrarMovimiento(1L, movimiento);
+                given(movimientoRestMapper.domainToResponse(any()))
+                                .willReturn(new MovimientoResponse());
 
-        assertNotNull(response);
-        verify(cuentaPersistencePort).save(any());
-    }
+                MovimientoResponse response = movimientoService.registrarMovimiento(1L, input);
 
-    @Test
-    void registrarMovimiento_retiro_ok() {
+                assertThat(response).isNotNull();
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.RETIRO)
-                .valor(new BigDecimal("-200"))
-                .cuentaId(1L)
-                .fecha(LocalDate.now())
-                .build();
+                then(movimientoPersistencePort).should()
+                                .save(argThat(m -> m.getValor().compareTo(new BigDecimal("200")) == 0 &&
+                                                m.getSaldo().compareTo(new BigDecimal("1200")) == 0));
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                then(cuentaPersistencePort).should().save(cuenta);
+        }
 
-        when(movimientoPersistencePort.save(any()))
-                .thenAnswer(inv -> inv.getArgument(0));
+        @Test
+        void registrarMovimiento_retiro_ok() {
 
-        when(movimientoRestMapper.domainToResponse(any()))
-                .thenReturn(new MovimientoResponse());
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.RETIRO)
+                                .valor(new BigDecimal("-200"))
+                                .build();
 
-        MovimientoResponse response =
-                movimientoService.registrarMovimiento(1L, movimiento);
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        assertNotNull(response);
-    }
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of());
 
-    @Test
-    void listarMovimientos_ok() {
+                given(movimientoPersistencePort.save(any()))
+                                .willAnswer(inv -> inv.getArgument(0));
 
-        when(movimientoPersistencePort.obtenerListadoMovimientos())
-                .thenReturn(List.of(new MovimientoListadoResponse()));
+                given(movimientoRestMapper.domainToResponse(any()))
+                                .willReturn(new MovimientoResponse());
 
-        List<MovimientoListadoResponse> result =
-                movimientoService.listarMovimientosFormateados();
+                MovimientoResponse response = movimientoService.registrarMovimiento(1L, input);
 
-        assertFalse(result.isEmpty());
-    }
+                assertThat(response).isNotNull();
 
-    @Test
-    void eliminar_ok() {
+                then(movimientoPersistencePort).should()
+                                .save(argThat(m -> m.getSaldo().compareTo(new BigDecimal("800")) == 0));
+        }
 
-        movimientoService.eliminar(1L);
+        @Test
+        void registrarMovimiento_cuentaNoExiste_lanzaError() {
 
-        verify(movimientoPersistencePort).delete(1L);
-    }
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.DEPOSITO)
+                                .valor(new BigDecimal("100"))
+                                .build();
 
-    @Test
-    void registrarMovimiento_cuentaNoExiste_lanzaError() {
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.empty());
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.DEPOSITO)
-                .valor(new BigDecimal("100"))
-                .cuentaId(1L)
-                .build();
+                assertThatThrownBy(() -> movimientoService.registrarMovimiento(1L, input))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("no existe");
+        }
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.empty());
+        @Test
+        void registrarMovimiento_depositoNegativo_lanzaError() {
 
-        assertThrows(RuntimeException.class, () ->
-                movimientoService.registrarMovimiento(1L, movimiento)
-        );
-    }
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.DEPOSITO)
+                                .valor(new BigDecimal("-100"))
+                                .build();
 
-    @Test
-    void registrarMovimiento_depositoNegativo_lanzaError() {
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.DEPOSITO)
-                .valor(new BigDecimal("-100"))
-                .cuentaId(1L)
-                .build();
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of());
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                assertThatThrownBy(() -> movimientoService.registrarMovimiento(1L, input))
+                                .isInstanceOf(IllegalArgumentException.class);
+        }
 
-        assertThrows(RuntimeException.class, () ->
-                movimientoService.registrarMovimiento(1L, movimiento)
-        );
-    }
+        @Test
+        void registrarMovimiento_retiroPositivo_lanzaError() {
 
-    @Test
-    void registrarMovimiento_retiroPositivo_lanzaError() {
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.RETIRO)
+                                .valor(new BigDecimal("100"))
+                                .build();
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.RETIRO)
-                .valor(new BigDecimal("100")) // ❌ mal signo
-                .cuentaId(1L)
-                .build();
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of());
 
-        assertThrows(RuntimeException.class, () ->
-                movimientoService.registrarMovimiento(1L, movimiento)
-        );
-    }
+                assertThatThrownBy(() -> movimientoService.registrarMovimiento(1L, input))
+                                .isInstanceOf(IllegalArgumentException.class);
+        }
 
-    @Test
-    void registrarMovimiento_sinSaldo_lanzaError() {
+        @Test
+        void registrarMovimiento_sinSaldo_lanzaError() {
 
-        cuenta.setSaldoDisponible(BigDecimal.ZERO);
+                cuenta.setSaldoDisponible(BigDecimal.ZERO);
 
-        Movimiento movimiento = Movimiento.builder()
-                .tipo(TipoMovimiento.RETIRO)
-                .valor(new BigDecimal("-100"))
-                .cuentaId(1L)
-                .build();
+                Movimiento input = Movimiento.builder()
+                                .tipo(TipoMovimiento.RETIRO)
+                                .valor(new BigDecimal("-100"))
+                                .build();
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        assertThrows(RuntimeException.class, () ->
-                movimientoService.registrarMovimiento(1L, movimiento)
-        );
-    }
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of());
 
-    @Test
-    void registrarMovimiento_excedeCupoDiario_lanzaError() {
+                assertThatThrownBy(() -> movimientoService.registrarMovimiento(1L, input))
+                                .isInstanceOf(RuntimeException.class);
+        }
 
-        Movimiento retiroHoy = Movimiento.builder()
-                .tipo(TipoMovimiento.RETIRO)
-                .valor(new BigDecimal("-900"))
-                .fecha(LocalDate.now())
-                .build();
+        @Test
+        void registrarMovimiento_excedeCupoDiario_lanzaError() {
 
-        cuenta.setMovimientos(List.of(retiroHoy));
+                Movimiento retiroHoy = Movimiento.builder()
+                                .tipo(TipoMovimiento.RETIRO)
+                                .valor(new BigDecimal("-900"))
+                                .fecha(LocalDate.now())
+                                .build();
 
-        Movimiento nuevoRetiro = Movimiento.builder()
-                .tipo(TipoMovimiento.RETIRO)
-                .valor(new BigDecimal("-200"))
-                .cuentaId(1L)
-                .fecha(LocalDate.now())
-                .build();
+                Movimiento nuevo = Movimiento.builder()
+                                .tipo(TipoMovimiento.RETIRO)
+                                .valor(new BigDecimal("-200"))
+                                .build();
 
-        when(cuentaPersistencePort.findById(1L))
-                .thenReturn(Optional.of(cuenta));
+                given(cuentaPersistencePort.findById(1L))
+                                .willReturn(Optional.of(cuenta));
 
-        assertThrows(RuntimeException.class, () ->
-                movimientoService.registrarMovimiento(1L, nuevoRetiro)
-        );
-    }
+                given(movimientoPersistencePort.findRetirosByCuentaIdAndFecha(eq(1L), any()))
+                                .willReturn(List.of(retiroHoy));
+
+                assertThatThrownBy(() -> movimientoService.registrarMovimiento(1L, nuevo))
+                                .isInstanceOf(RuntimeException.class);
+        }
+
+        @Test
+        void listarMovimientos_ok() {
+
+                given(movimientoPersistencePort.obtenerListadoMovimientos())
+                                .willReturn(List.of(new MovimientoListadoResponse()));
+
+                List<MovimientoListadoResponse> result = movimientoService.listarMovimientosFormateados();
+
+                assertThat(result).isNotEmpty();
+        }
+
+        @Test
+        void eliminar_ok() {
+
+                movimientoService.eliminar(1L);
+
+                then(movimientoPersistencePort).should().delete(1L);
+        }
+
+        @Test
+        void obtenerPorId() {
+
+                Movimiento mov = Movimiento.builder().build();
+
+                given(movimientoPersistencePort.findById(1L))
+                                .willReturn(Optional.of(mov));
+
+                Optional<Movimiento> result = movimientoService.obtenerPorId(1L);
+
+                assertThat(result).isPresent();
+        }
 }

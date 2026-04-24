@@ -57,9 +57,15 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
             throw new RuntimeException("El número de cuenta " + cuenta.getNumeroCuenta() + " ya existe");
         }
 
-        cuenta.setEstado(true);
+        Cuenta nuevaCuenta = Cuenta.crear(
+            cuenta.getNumeroCuenta(),
+            cuenta.getTipo(),
+            cuenta.getSaldoInicial(),
+            cuenta.getClienteId()
+        );
 
-        Cuenta cuentaCreada = cuentaPersistencePort.save(cuenta);
+
+        Cuenta cuentaCreada = cuentaPersistencePort.save(nuevaCuenta);
         log.info("Cuenta creada exitosamente. Número: {}, Cliente ID: {}",
                 cuentaCreada.getNumeroCuenta(), cuentaCreada.getClienteId());
 
@@ -68,31 +74,27 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
 
     @Override
     @Transactional
-    public CuentaResponse actualizar(Long id, Cuenta cuenta) {
-        log.info("Actualizando cuenta: {}", cuenta.getId());
+    public CuentaResponse actualizar(Long id, Cuenta cuentaActualizada) {
+        log.info("Actualizando cuenta con ID: {}", id);
 
-        Optional<Cuenta> cuentaExistente = cuentaPersistencePort.findById(cuenta.getId());
-        if (cuentaExistente.isEmpty()) {
-            throw new RuntimeException("La cuenta con ID " + cuenta.getId() + " no existe");
-        }
+        Cuenta cuentaExistente = cuentaPersistencePort.findById(id).orElseThrow(() -> new RuntimeException("La cuenta con ID " + id + " no existe"));
 
-        Cuenta cuentabd = cuentaExistente.get();
-
-        if (!cuentabd.getNumeroCuenta().equals(cuenta.getNumeroCuenta())) {
+        /*if (!cuentaExistente.getNumeroCuenta().equals(cuentaActualizada.getNumeroCuenta())) 
             throw new RuntimeException("No se puede cambiar el número de cuenta");
-        }
+        
+        if (!cuentaExistente.getClienteId().equals(cuentaActualizada.getClienteId())) 
+            throw new RuntimeException("No se puede cambiar el cliente de la cuenta");*/
+        
 
-        if (!cuentabd.getClienteId().equals(cuenta.getClienteId())) {
-            throw new RuntimeException("No se puede cambiar el cliente de la cuenta");
-        }
+        cuentaExistente.actualizarDatos(
+            cuentaActualizada.getTipo(),
+            cuentaActualizada.isEstado()
+        );
 
-        cuentabd.setTipo(cuenta.getTipo());
-        cuentabd.setEstado(cuenta.isEstado());
+        Cuenta cuentaGuardada = cuentaPersistencePort.save(cuentaExistente);
+        log.info("Cuenta actualizada exitosamente. Número: {}", cuentaGuardada.getNumeroCuenta());
 
-        Cuenta cuentaActualizada = cuentaPersistencePort.save(cuentabd);
-        log.info("Cuenta actualizada exitosamente. Número: {}, Estado: {}", cuentaActualizada.getNumeroCuenta(), cuentaActualizada.isEstado());
-
-        return cuentaRestMapper.domainToResponse(cuentaActualizada);
+        return cuentaRestMapper.domainToResponse(cuentaGuardada);
     }
 
     @Override
@@ -100,12 +102,8 @@ public class CuentaService implements ICuentaCommandUseCase, ICuentaQueryUseCase
     public void eliminar(Long cuentaId) {
         log.info("Eliminando cuenta con ID: {}", cuentaId);
 
-        Optional<Cuenta> cuentaExistente = cuentaPersistencePort.findById(cuentaId);
-        if (cuentaExistente.isEmpty()) {
-            throw new RuntimeException("La cuenta con ID " + cuentaId + " no existe");
-        }
-
-        Cuenta cuenta = cuentaExistente.get();
+        Cuenta cuenta = cuentaPersistencePort.findById(cuentaId)
+            .orElseThrow(() -> new RuntimeException("La cuenta con ID " + cuentaId + " no existe"));
 
         if (cuenta.getMovimientos() != null && !cuenta.getMovimientos().isEmpty()) {
             throw new RuntimeException("No se puede eliminar una cuenta que tiene movimientos registrados");

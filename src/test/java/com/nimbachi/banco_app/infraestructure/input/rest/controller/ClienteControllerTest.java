@@ -8,10 +8,7 @@ import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.CreateClien
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.request.UpdateClienteRequest;
 import com.nimbachi.banco_app.infraestructure.input.rest.dto.response.ClienteResponse;
 import com.nimbachi.banco_app.infraestructure.input.rest.mapper.IClienteRestMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -22,14 +19,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ClienteController.class)
-@DisplayName("ClienteController — pruebas de capa web")
 class ClienteControllerTest {
 
         private static final String BASE_URL = "/api/clientes";
@@ -53,8 +48,22 @@ class ClienteControllerTest {
         private CreateClienteRequest createRequest;
         private UpdateClienteRequest updateRequest;
 
+        private Cliente clienteValido;
+
         @BeforeEach
         void setUp() {
+
+                clienteValido = Cliente.crearCliente(
+                                "CLI001",
+                                "1234",
+                                "Ana Torres",
+                                "F",
+                                30,
+                                "1234567890",
+                                "Calle 10",
+                                "3001234567");
+                clienteValido.setId(1L);
+
                 responseBase = ClienteResponse.builder()
                                 .id(1L)
                                 .clienteId("CLI001")
@@ -62,7 +71,7 @@ class ClienteControllerTest {
                                 .genero("F")
                                 .edad(30)
                                 .identificacion("1234567890")
-                                .direccion("Calle 10 #5-20")
+                                .direccion("Calle 10")
                                 .telefono("3001234567")
                                 .estado(true)
                                 .build();
@@ -73,15 +82,15 @@ class ClienteControllerTest {
                                 .genero("F")
                                 .edad(30)
                                 .identificacion("1234567890")
-                                .direccion("Calle 10 #5-20")
+                                .direccion("Calle 10")
                                 .telefono("3001234567")
-                                .contrasena("segura123")
+                                .contrasena("1234")
                                 .build();
 
                 updateRequest = UpdateClienteRequest.builder()
-                                .nombre("Ana Torres Gómez")
-                                .direccion("Calle 20 #8-15")
-                                .telefono("3007654321")
+                                .nombre("Nuevo Nombre")
+                                .direccion("Nueva direccion")
+                                .telefono("999999")
                                 .estado(true)
                                 .build();
         }
@@ -93,7 +102,7 @@ class ClienteControllerTest {
                 void post_ok() throws Exception {
 
                         given(clienteRestMapper.requestToDomain(any()))
-                                        .willReturn(new Cliente());
+                                        .willReturn(clienteValido);
 
                         given(clienteCommandUseCase.crearCliente(any()))
                                         .willReturn(responseBase);
@@ -102,7 +111,8 @@ class ClienteControllerTest {
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(createRequest)))
                                         .andExpect(status().isCreated())
-                                        .andExpect(jsonPath("$.data.clienteId", is("CLI001")));
+                                        .andExpect(jsonPath("$.data.clienteId", is("CLI001")))
+                                        .andExpect(jsonPath("$.message", containsString("exitosamente")));
                 }
         }
 
@@ -121,25 +131,19 @@ class ClienteControllerTest {
                 }
         }
 
-        // ================= GET BY ID =================
         @Nested
         class GetPorId {
 
                 @Test
                 void get_by_id_ok() throws Exception {
 
-                        Cliente dominio = new Cliente();
-                        dominio.setId(1L); // 🔥 IMPORTANTE
-
                         given(clienteQueryUseCase.obtenerPorId(1L))
-                                        .willReturn(Optional.of(dominio));
-
-                        given(clienteRestMapper.domainToResponse(dominio))
-                                        .willReturn(responseBase);
+                                        .willReturn(Optional.of(clienteValido));
 
                         mockMvc.perform(get(BASE_URL + "/1"))
                                         .andExpect(status().isOk())
-                                        .andExpect(jsonPath("$.data.id", is(1)));
+                                        .andExpect(jsonPath("$.data.id", is(1)))
+                                        .andExpect(jsonPath("$.data.nombre", is("Ana Torres")));
                 }
 
                 @Test
@@ -150,7 +154,8 @@ class ClienteControllerTest {
 
                         mockMvc.perform(get(BASE_URL + "/99"))
                                         .andExpect(status().isNotFound())
-                                        .andExpect(jsonPath("$.message", is("Cliente no encontrado"))); // 👈 ajustado
+                                        .andExpect(jsonPath("$.message", is("Cliente no encontrado")))
+                                        .andExpect(jsonPath("$.code", is("CLIENTE_NOT_FOUND")));
                 }
         }
 
@@ -160,13 +165,8 @@ class ClienteControllerTest {
                 @Test
                 void put_ok() throws Exception {
 
-                        Cliente dominio = new Cliente();
-
                         given(clienteQueryUseCase.obtenerPorId(1L))
-                                        .willReturn(Optional.of(dominio)); // 🔥 CLAVE
-
-                        given(clienteRestMapper.updateRequestToDomain(any()))
-                                        .willReturn(new Cliente());
+                                        .willReturn(Optional.of(clienteValido));
 
                         given(clienteCommandUseCase.actualizar(eq(1L), any()))
                                         .willReturn(responseBase);
@@ -174,19 +174,21 @@ class ClienteControllerTest {
                         mockMvc.perform(put(BASE_URL + "/1")
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(updateRequest)))
-                                        .andExpect(status().isOk());
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.clienteId", is("CLI001")));
                 }
 
                 @Test
                 void put_not_found() throws Exception {
 
                         given(clienteQueryUseCase.obtenerPorId(99L))
-                                        .willReturn(Optional.empty()); // 🔥 CLAVE
+                                        .willReturn(Optional.empty());
 
                         mockMvc.perform(put(BASE_URL + "/99")
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(updateRequest)))
-                                        .andExpect(status().isNotFound());
+                                        .andExpect(status().isNotFound())
+                                        .andExpect(jsonPath("$.code", is("CLIENTE_NOT_FOUND")));
                 }
         }
 
@@ -197,22 +199,24 @@ class ClienteControllerTest {
                 void delete_ok() throws Exception {
 
                         given(clienteQueryUseCase.obtenerPorId(1L))
-                                        .willReturn(Optional.of(new Cliente())); // 🔥 CLAVE
+                                        .willReturn(Optional.of(clienteValido));
 
                         willDoNothing().given(clienteCommandUseCase).eliminar(1L);
 
                         mockMvc.perform(delete(BASE_URL + "/1"))
-                                        .andExpect(status().isOk());
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.message", containsString("eliminado")));
                 }
 
                 @Test
                 void delete_not_found() throws Exception {
 
                         given(clienteQueryUseCase.obtenerPorId(99L))
-                                        .willReturn(Optional.empty()); // 🔥 CLAVE
+                                        .willReturn(Optional.empty());
 
                         mockMvc.perform(delete(BASE_URL + "/99"))
-                                        .andExpect(status().isNotFound());
+                                        .andExpect(status().isNotFound())
+                                        .andExpect(jsonPath("$.code", is("CLIENTE_NOT_FOUND")));
                 }
         }
 }

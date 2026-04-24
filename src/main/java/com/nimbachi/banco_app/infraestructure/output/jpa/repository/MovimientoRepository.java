@@ -20,6 +20,7 @@ public interface MovimientoRepository extends JpaRepository<MovimientoEntity, Lo
 
     @Query("""
                 SELECT new com.nimbachi.banco_app.infraestructure.input.rest.dto.response.MovimientoListadoResponse(
+                    m.id,
                     c.id,
                     m.fecha,
                     c.numeroCuenta,
@@ -38,4 +39,14 @@ public interface MovimientoRepository extends JpaRepository<MovimientoEntity, Lo
                 ORDER BY m.fecha DESC
             """)
     List<MovimientoListadoResponse> obtenerListadoMovimientos();
+
+    @Query("""
+                SELECT m
+                FROM MovimientoEntity m
+                JOIN m.cuenta c
+                WHERE c.id = :cuentaId
+                  AND m.fecha = :fecha
+                  AND m.valor < 0
+            """)
+    List<MovimientoEntity> findRetirosByCuentaIdAndFecha(Long cuentaId, LocalDate fecha);
 }

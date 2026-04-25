@@ -23,7 +23,7 @@ public interface IClienteRestMapper {
 
     @Mapping(
         target = "estadoTexto",
-        expression = "java(domain.getEstado() ? \"Activo\" : \"Inactivo\")"
+        expression = "java(domain.isEstado() ? \"Activo\" : \"Inactivo\")"
     )
     @Mapping(target = "cuentas", ignore = true)
     ClienteResponse domainToResponse(Cliente domain);
